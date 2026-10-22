@@ -3,9 +3,30 @@
  */
 
 const http = require('http');
+const assert = require('assert');
+const JSZip = require('jszip');
+const { calculate } = require('./workplan_metrics');
+const { buildWorkplanExcel } = require('./api/export_workplan');
+const model = require('./data/excel_row_map.json');
+const dataset = require('./data/workplan_dataset.json');
 
 async function runTests() {
   console.log('--- Starting System Verification Tests ---');
+
+  const stages = dataset.milestones.map(stage => ({ ...stage, start: stage.start_date, end: stage.end_date,
+    tasks: dataset.tasks.filter(task => task.stage_id === stage.id).map(task => ({ ...task, start: task.start_date, end: task.end_date })) }));
+  const metrics = calculate(stages, model, '2026-10-22');
+  assert.equal(Math.floor(metrics.planned), 23);
+  assert.equal(Math.floor(metrics.actual), 16);
+  assert.equal(Math.floor(metrics.planned) - Math.floor(metrics.actual), 7);
+  const xlsx = await buildWorkplanExcel({ project: dataset.project, stages }, '2026-10-22');
+  const zip = await JSZip.loadAsync(xlsx);
+  const sheet = await zip.file('xl/worksheets/sheet1.xml').async('string');
+  const cell = ref => (sheet.match(new RegExp(`<c r="${ref}"[^>]*>[\\s\\S]*?<\\/c>`)) || [])[0] || '';
+  assert.match(cell('E4'), /AVERAGE\(E5,E30,E35,E93\)/);
+  assert.match(cell('G3'), /Behind Plan 7 pp/);
+  assert.match(cell('H240'), /NETWORKDAYS\(I240,J240\)/);
+  console.log('✅ Excel formula, 23% / 16% / 7 pp progress, and reference-format export verified.');
 
   // Test 1: Verify require of api/index.js
   try {

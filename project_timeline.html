@@ -137,7 +137,7 @@
 
     .project-hero {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 260px;
+      grid-template-columns: minmax(0, 1fr) minmax(390px, 1.2fr);
       gap: 18px;
       align-items: center;
       margin-bottom: 16px;
@@ -180,8 +180,18 @@
     .hero-meter {
       display: grid;
       gap: 10px;
-      justify-items: end;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: stretch;
     }
+    .hero-stat { min-width: 0; padding: 14px; border-radius: 12px; background: rgba(255,255,255,.14); }
+    .hero-stat .hero-percent { font-size: clamp(30px, 3.5vw, 52px); margin: 8px 0; }
+    .hero-stat .hero-meta { text-align: left; line-height: 1.35; }
+    .export-btn { display: inline-flex; align-items: center; padding: 11px 15px; border-radius: 9px; background: #0f766e; color: #fff; font-weight: 800; text-decoration: none; }
+    .export-btn:hover { background: #115e59; }
+    .current-list { display: grid; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
+    .current-list li { border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; background: #fff; line-height: 1.4; }
+    .current-kind { display: inline-block; margin-right: 8px; color: #236b8b; font-size: 11px; font-weight: 900; text-transform: uppercase; }
+    .current-range { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
 
     .hero-percent {
       font-size: clamp(46px, 6vw, 74px);
@@ -1081,7 +1091,7 @@
         text-align: center;
       }
       .hero-meter {
-        justify-items: center;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
       .hero-meta {
         text-align: center;
@@ -1089,6 +1099,8 @@
       .hero-track {
         margin: 0 auto;
       }
+      .hero-stat { padding: 10px; }
+      .hero-stat .hero-percent { font-size: clamp(28px, 8vw, 44px); }
 
       .type-legend {
         grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
@@ -1471,6 +1483,7 @@
           <label for="currentDate">ตรวจสถานะจากวันที่</label>
           <input id="currentDate" type="date">
         </div>
+        <a id="exportExcel" href="#" class="export-btn">↓ Export Excel</a>
         <a href="dashboard.html" class="admin-btn btn-back">← Dashboard</a>
         <a href="admin/" class="admin-btn">Admin Dashboard</a>
       </div>
@@ -1481,17 +1494,14 @@
 
     <section class="project-hero" aria-live="polite" aria-label="Overall project progress">
       <div>
-        <p class="eyebrow">Overall Project Progress</p>
-        <h2 id="heroTitle">Project completion as of today</h2>
+        <p class="eyebrow">Progress ตามสูตรใน Excel Work Plan</p>
+        <h2 id="heroTitle">Project Progress</h2>
         <ul id="heroBullets" class="hero-bullets"></ul>
       </div>
       <div class="hero-meter">
-        <div class="hero-label">Completed</div>
-        <div id="heroPercent" class="hero-percent">0%</div>
-        <div class="hero-track">
-          <div id="heroFill" class="hero-fill"></div>
-        </div>
-        <div id="heroMeta" class="hero-meta">-</div>
+        <div class="hero-stat"><div class="hero-label">Baseline Planned</div><div id="heroPlanned" class="hero-percent">0%</div><div id="heroPlannedMeta" class="hero-meta">Excel column E</div></div>
+        <div class="hero-stat"><div class="hero-label">Actual · Work Complete</div><div id="heroPercent" class="hero-percent">0%</div><div id="heroMeta" class="hero-meta">Excel column F</div></div>
+        <div class="hero-stat"><div class="hero-label">Behind Plan</div><div id="heroGap" class="hero-percent">0 pp</div><div id="heroGapMeta" class="hero-meta">Planned − Actual</div></div>
       </div>
     </section>
 
@@ -1528,6 +1538,7 @@
       <div class="status-main">
         <p class="eyebrow">Current Process</p>
         <h2 id="currentStage" class="stage-name">-</h2>
+        <ul id="currentProcessList" class="current-list"></ul>
         <div id="currentStatePill" class="current-state-pill">-</div>
         <p id="currentRange" class="stage-range">-</p>
         <div class="progress-wrap">
@@ -1649,9 +1660,11 @@
     </section>
   </main>
 
+  <script src="workplan_metrics.js"></script>
   <script>
     let stages = [];
     let project = {};
+    let progressModel = null;
 
     // ดึงค่า project_id จาก URL query parameter
     const urlParams = new URLSearchParams(window.location.search);
@@ -1776,8 +1789,13 @@
     const heroTitle = document.getElementById("heroTitle");
     const heroBullets = document.getElementById("heroBullets");
     const heroPercent = document.getElementById("heroPercent");
-    const heroFill = document.getElementById("heroFill");
+    const heroPlanned = document.getElementById("heroPlanned");
+    const heroPlannedMeta = document.getElementById("heroPlannedMeta");
+    const heroGap = document.getElementById("heroGap");
+    const heroGapMeta = document.getElementById("heroGapMeta");
     const heroMeta = document.getElementById("heroMeta");
+    const exportExcel = document.getElementById("exportExcel");
+    const currentProcessList = document.getElementById("currentProcessList");
     const daysPassed = document.getElementById("daysPassed");
     const daysPassedNote = document.getElementById("daysPassedNote");
     const daysRemaining = document.getElementById("daysRemaining");
@@ -1938,16 +1956,13 @@
         .slice(0, limit);
     }
 
-    function getTrackStatus(overallProgress, currentStage, current) {
-      const currentProgress = getProgress(currentStage, current);
-      const remainingDays = Math.max(0, overallProgress.totalDays - overallProgress.completedDays);
-      const isAtRisk = remainingDays <= 45 && overallProgress.percent < 90;
+    function getTrackStatus(metrics) {
+      const behind = metrics && metrics.planned > metrics.actual + 0.001;
+      const roundedGap = metrics ? Math.floor(metrics.planned) - Math.floor(metrics.actual) : 0;
       return {
-        label: isAtRisk ? "At Risk" : "On Track",
-        note: isAtRisk
-          ? "ใกล้วันสิ้นสุดโครงการ ควรตรวจ dependency และ milestone ถัดไป"
-          : `Current task progress ${currentProgress}% และ timeline ยังอยู่ในช่วงที่กำหนด`,
-        atRisk: isAtRisk
+        label: behind ? "Behind Plan" : "On Plan",
+        note: behind ? `ช้ากว่า Baseline ${roundedGap} จุดเปอร์เซ็นต์ (ค่าจริง ${metrics.gap.toFixed(2)} pp)` : "Actual เป็นไปตาม Baseline",
+        atRisk: behind
       };
     }
 
@@ -2293,18 +2308,18 @@
       renderSummary(current);
     }
 
-    function renderSnapshot(current, currentStage, overallProgress) {
+    function renderSnapshot(current, currentStage, overallProgress, metrics, activeProcesses) {
       const remaining = Math.max(0, overallProgress.totalDays - overallProgress.completedDays);
       const currentTaskProgress = getProgress(currentStage, current);
-      const track = getTrackStatus(overallProgress, currentStage, current);
+      const track = getTrackStatus(metrics);
       const milestones = findUpcomingMilestones(current, 2);
 
       daysPassed.textContent = overallProgress.completedDays.toLocaleString("th-TH");
       daysPassedNote.textContent = `จากทั้งหมด ${overallProgress.totalDays.toLocaleString("th-TH")} วัน`;
       daysRemaining.textContent = remaining.toLocaleString("th-TH");
       daysRemainingNote.textContent = `ถึง ${formatter.format(overallProgress.end)}`;
-      currentTaskMetric.textContent = `${currentTaskProgress}%`;
-      currentTaskNote.textContent = `${currentStage.title} ${currentStage.assignee ? `[👤 ${currentStage.assignee}]` : ''}`;
+      currentTaskMetric.textContent = `${activeProcesses.length} Process`;
+      currentTaskNote.textContent = activeProcesses.length ? activeProcesses.slice(0, 2).map(task => task.title).join(' · ') : currentStage.title;
       trackStatus.textContent = track.label;
       trackStatus.className = `track-pill ${track.atRisk ? "at-risk" : ""}`;
       trackStatusNote.textContent = track.note;
@@ -2362,8 +2377,11 @@
         heroTitle.textContent = "ไม่มีแผนงานโครงการ";
         heroBullets.innerHTML = "<li>กรุณาตั้งค่าเชื่อมโยงฐานข้อมูล หรือเพิ่มขั้นตอนงานหลักในระบบหลังบ้าน</li>";
         heroPercent.textContent = "0%";
-        heroFill.style.width = "0%";
+        heroPlanned.textContent = "0%";
+        heroGap.textContent = "0 pp";
         heroMeta.textContent = "-";
+        heroPlannedMeta.textContent = "-";
+        heroGapMeta.textContent = "-";
         
         daysPassed.textContent = "-";
         daysPassedNote.textContent = "-";
@@ -2381,6 +2399,7 @@
         }
 
         document.getElementById("currentStage").textContent = "-";
+        currentProcessList.innerHTML = "";
         currentStatePill.className = "current-state-pill future";
         currentStatePill.textContent = "ไม่มีขั้นตอนหลักที่อยู่ระหว่างดำเนินการ";
         document.getElementById("currentRange").textContent = "-";
@@ -2397,28 +2416,35 @@
         return;
       }
 
-      const currentStage = findCurrentStage(current);
+      const activeStages = stages.filter(stage => toDate(stage.start) <= current && toDate(stage.end) >= current && parseInt(stage.is_completed) !== 1);
+      const currentStage = activeStages[0] || findCurrentStage(current);
+      const activeProcesses = activeStages.flatMap(stage => (stage.tasks || []).filter(task => Number(task.level) === 2 && toDate(task.start) <= current && toDate(task.end) >= current && parseInt(task.is_completed) !== 1));
       const nextStage = findNextStage(current, currentStage);
       const progress = getProgress(currentStage, current);
       const overallProgress = getOverallProgress(current);
+      const metrics = progressModel ? WorkplanMetrics.calculate(stages, progressModel, dateInput.value) : null;
       const currentStageState = getState(currentStage, current);
 
-      const roundedOverall = Math.round(overallProgress.percent);
-      heroTitle.textContent = `โครงการดำเนินการไปแล้ว ${roundedOverall}%`;
+      heroTitle.textContent = metrics ? `Actual ${Math.floor(metrics.actual)}% · Baseline ${Math.floor(metrics.planned)}%` : 'กำลังคำนวณข้อมูลโครงการ';
       heroBullets.innerHTML = `
         <li>กำหนดการภาพรวม: ${formatter.format(overallProgress.start)} ถึง ${formatter.format(overallProgress.end)}</li>
-        <li>เวลาดำเนินงาน: ผ่านไปแล้ว ${overallProgress.completedDays.toLocaleString("th-TH")} จากทั้งหมด ${overallProgress.totalDays.toLocaleString("th-TH")} วัน</li>
-        <li>สถานะปัจจุบัน: อยู่ใน ${currentStage.title} ${currentStage.assignee ? `(ผู้รับผิดชอบหลัก: ${currentStage.assignee})` : ''}</li>
+        <li>อ้างอิงสูตรและลำดับงานจาก Excel · ค่าแสดงผลปัดลงเป็นจำนวนเต็ม</li>
+        <li>ข้อมูล ณ วันที่ ${formatter.format(current)}</li>
       `;
-      heroPercent.textContent = `${overallProgress.percent.toFixed(1)}%`;
-      heroFill.style.width = `${overallProgress.percent}%`;
-      heroMeta.textContent = `อัปเดต ณ วันที่ ${formatter.format(current)}`;
-      renderSnapshot(current, currentStage, overallProgress);
+      heroPlanned.textContent = metrics ? `${Math.floor(metrics.planned)}%` : '-';
+      heroPlannedMeta.textContent = metrics ? `ค่าจริง ${metrics.planned.toFixed(2)}%` : '-';
+      heroPercent.textContent = metrics ? `${Math.floor(metrics.actual)}%` : '-';
+      heroMeta.textContent = metrics ? `ค่าจริง ${metrics.actual.toFixed(2)}%` : '-';
+      heroGap.textContent = metrics ? `${Math.max(0, Math.floor(metrics.planned) - Math.floor(metrics.actual))} pp` : '-';
+      heroGapMeta.textContent = metrics ? `ค่าจริง ${metrics.gap.toFixed(2)} จุดเปอร์เซ็นต์` : '-';
+      exportExcel.href = `api.php?action=export_timeline_excel&project_id=${projectId}&as_of=${encodeURIComponent(dateInput.value)}`;
+      renderSnapshot(current, currentStage, overallProgress, metrics, activeProcesses);
 
-      document.getElementById("currentStage").innerHTML = `
-        ${escapeHTML(currentStage.title)}
-        ${currentStage.assignee ? `<span style="font-size: 14px; font-weight:600; color:var(--muted); display:block; margin-top:4px;">ผู้รับผิดชอบหลัก: ${renderAssigneeBadges(currentStage.assignee, 'stage')}</span>` : ''}
-      `;
+      document.getElementById("currentStage").textContent = activeStages.length || activeProcesses.length ? `${activeStages.length} Milestone · ${activeProcesses.length} Process` : currentStage.title;
+      currentProcessList.innerHTML = activeStages.length || activeProcesses.length ? [
+        ...activeStages.map(stage => `<li><span class="current-kind">Milestone</span><strong>${escapeHTML(stage.wbs || '')} ${escapeHTML(stage.title)}</strong><span class="current-range">${escapeHTML(formatRange(stage))}</span></li>`),
+        ...activeProcesses.map(task => `<li><span class="current-kind">Process</span><strong>${escapeHTML(task.wbs || '')} ${escapeHTML(task.title)}</strong><span class="current-range">${escapeHTML(formatRange(task))}</span></li>`)
+      ].join('') : '<li>ไม่มี Milestone หรือ Process ที่อยู่ระหว่างดำเนินการ</li>';
       currentStatePill.className = `current-state-pill ${currentStageState}`;
       currentStatePill.textContent = `วันนี้อยู่ในขั้นตอน: ${getStateLabel(currentStageState)}`;
       document.getElementById("currentRange").textContent = formatRange(currentStage);
@@ -2471,6 +2497,7 @@
         const resData = await response.json();
         project = resData.project;
         stages = resData.stages;
+        progressModel = resData.progress_model || null;
         errorContainer.innerHTML = '';
         
         // อัปเดตหัวเว็บและหัวแผนภูมิ Gantt ให้ตรงกับรายละเอียดโครงการที่เลือก

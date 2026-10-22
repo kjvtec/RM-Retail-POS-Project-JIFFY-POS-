@@ -4,6 +4,8 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cookie = require('cookie');
+const excelProgressModel = require('../data/excel_row_map.json');
+const { buildWorkplanExcel } = require('./export_workplan');
 
 // Load environment variables (fallback to process.env)
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
@@ -305,10 +307,24 @@ module.exports = async function handler(req, res) {
       return sendJson(res, result);
     }
 
-    // --- Action: get_timeline ---
-    if (action === 'get_timeline') {
+    // --- Actions: view or export the same live work plan ---
+    if (action === 'get_timeline' || action === 'export_timeline_excel') {
       const pidParam = urlObj.searchParams.get('project_id') || (req.query && req.query.project_id);
       const projectId = parseInt(pidParam, 10) || 1;
+      const sendTimeline = async timeline => {
+        if (action === 'get_timeline') return sendJson(res, timeline);
+        if (!timeline.project) return sendJson(res, { error: 'ไม่พบข้อมูลโครงการสำหรับ Export' }, 404);
+        const asOf = urlObj.searchParams.get('as_of') || new Date().toISOString().slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf) || Number.isNaN(Date.parse(`${asOf}T00:00:00Z`))) {
+          return sendJson(res, { error: 'วันที่ Export ไม่ถูกต้อง' }, 400);
+        }
+        const file = await buildWorkplanExcel(timeline, asOf);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="Jiffy-POS-Workplan-${asOf}.xlsx"`);
+        res.setHeader('Cache-Control', 'no-store');
+        res.statusCode = 200;
+        return res.end(file);
+      };
 
       let project = null;
       let stages = [];
@@ -329,7 +345,7 @@ module.exports = async function handler(req, res) {
             project = pData;
             const { data: sData, error: sErr } = await supabase
               .from('stages')
-              .select('id, wbs, title, start_date, end_date, color, sort_order, assignee, duration, weight_pct, percent_complete, status, stuck_reason, is_completed')
+              .select('id, wbs, title, start_date, end_date, color, sort_order, assignee, duration, weight_pct, percent_complete, percent_work_complete, status, stuck_reason, is_completed')
               .eq('project_id', projectId)
               .order('sort_order', { ascending: true })
               .order('start_date', { ascending: true });
@@ -341,7 +357,7 @@ module.exports = async function handler(req, res) {
             if (stageIds.length > 0) {
               const { data: tData, error: tErr } = await supabase
                 .from('tasks')
-                .select('id, stage_id, wbs, title, level, parent_wbs, start_date, end_date, duration, color, lane, assignee, sort_order, percent_complete, status, actual_start, actual_finish, stuck_reason, remark, is_completed')
+                .select('id, stage_id, wbs, title, level, parent_wbs, start_date, end_date, duration, color, lane, assignee, sort_order, percent_complete, percent_work_complete, status, actual_start, actual_finish, stuck_reason, remark, is_completed')
                 .in('stage_id', stageIds)
                 .order('sort_order', { ascending: true })
                 .order('start_date', { ascending: true });
@@ -377,6 +393,7 @@ module.exports = async function handler(req, res) {
               assignee: t.assignee,
               sort_order: parseInt(t.sort_order, 10) || 0,
               percent_complete: parseFloat(t.percent_complete) || 0,
+              percent_work_complete: parseFloat(t.percent_work_complete) || 0,
               status: t.status || (t.is_completed ? 'Complete' : 'Not Started'),
               actual_start: t.actual_start,
               actual_finish: t.actual_finish,
@@ -398,15 +415,17 @@ module.exports = async function handler(req, res) {
             assignee: s.assignee,
             weight_pct: s.weight_pct,
             percent_complete: parseFloat(s.percent_complete) || 0,
+            percent_work_complete: parseFloat(s.percent_work_complete) || 0,
             status: s.status,
             stuck_reason: s.stuck_reason,
             is_completed: s.is_completed,
             tasks: tasksByStage[s.id] || []
           }));
 
-          return sendJson(res, {
+          return sendTimeline({
             project,
-            stages: formattedStages
+            stages: formattedStages,
+            progress_model: excelProgressModel
           });
         }
       }
@@ -432,6 +451,7 @@ module.exports = async function handler(req, res) {
           assignee: t.assignee,
           sort_order: parseInt(t.sort_order, 10) || 0,
           percent_complete: parseFloat(t.percent_complete) || 0,
+          percent_work_complete: parseFloat(t.percent_work_complete) || 0,
           status: t.status || (t.is_completed ? 'Complete' : 'Not Started'),
           actual_start: t.actual_start,
           actual_finish: t.actual_finish,
@@ -453,15 +473,17 @@ module.exports = async function handler(req, res) {
         assignee: s.assignee,
         weight_pct: s.weight_pct,
         percent_complete: parseFloat(s.percent_complete) || 0,
+        percent_work_complete: parseFloat(s.percent_work_complete) || 0,
         status: s.status,
         stuck_reason: s.stuck_reason,
         is_completed: s.is_completed,
         tasks: tasksByStage[s.id] || []
       }));
 
-      return sendJson(res, {
+      return sendTimeline({
         project,
-        stages: formattedStages
+        stages: formattedStages,
+        progress_model: excelProgressModel
       });
     }
 
@@ -924,6 +946,10 @@ module.exports = async function handler(req, res) {
         const level = parseInt(data.level, 10) || (wbs ? wbs.split('.').length : 2);
         const duration = data.duration ? data.duration.trim() : null;
         const percent_complete = parseFloat(data.percent_complete) || (is_completed ? 100 : 0);
+        const percent_work_complete = is_completed ? 100 : Number(data.percent_work_complete ?? 0);
+        if (!Number.isFinite(percent_work_complete) || percent_work_complete < 0 || percent_work_complete > 100) {
+          return sendJson(res, { error: '% Work Complete ต้องอยู่ระหว่าง 0 ถึง 100' }, 400);
+        }
         const status = data.status ? data.status.trim() : (percent_complete >= 100 ? 'Complete' : 'Not Started');
         const actual_start = data.actual_start || null;
         const actual_finish = data.actual_finish || null;
@@ -978,6 +1004,7 @@ module.exports = async function handler(req, res) {
               level,
               duration,
               percent_complete,
+              percent_work_complete,
               status,
               actual_start,
               actual_finish,
@@ -1016,6 +1043,7 @@ module.exports = async function handler(req, res) {
               level,
               duration,
               percent_complete,
+              percent_work_complete,
               status,
               actual_start,
               actual_finish
