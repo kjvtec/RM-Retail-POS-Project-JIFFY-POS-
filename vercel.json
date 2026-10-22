@@ -2,6 +2,10 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/project_timeline.html"
+    },
+    {
       "source": "/api.php",
       "destination": "/api/index.js"
     },

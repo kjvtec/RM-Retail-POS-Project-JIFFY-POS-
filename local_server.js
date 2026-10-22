@@ -61,7 +61,9 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 2. Vercel Rewrite Emulation
-  if (pathname === '/' || pathname === '/index.php') {
+  if (pathname === '/') {
+    pathname = '/project_timeline.html';
+  } else if (pathname === '/index.php') {
     pathname = '/index.html';
   } else if (pathname === '/project_timeline.php') {
     pathname = '/project_timeline.html';

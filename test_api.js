@@ -49,12 +49,19 @@ async function runTests() {
   }
 
   try {
-    // Test 2.1: Check static index.html
+    // Test 2.1: The root route opens the Progress timeline.
     const resHome = await request('/');
-    if (resHome.status === 200 && resHome.body.includes('RM-Retail POS Project (JIFFY POS)')) {
-      console.log('✅ Test 2.1: Static index.html served correctly (200 OK).');
+    if (resHome.status === 200 && resHome.body.includes('Weekly Gantt Chart')) {
+      console.log('✅ Test 2.1: Root route serves the Progress timeline (200 OK).');
     } else {
       console.error('❌ Test 2.1 Failed: Status', resHome.status);
+    }
+
+    const resDashboard = await request('/index.html');
+    if (resDashboard.status === 200 && resDashboard.body.includes('Overall Projects Dashboard')) {
+      console.log('✅ Test 2.1b: Existing dashboard remains available at /index.html.');
+    } else {
+      console.error('❌ Test 2.1b Failed: Status', resDashboard.status);
     }
 
     // Test 2.2: Check static project_timeline.html rewrite

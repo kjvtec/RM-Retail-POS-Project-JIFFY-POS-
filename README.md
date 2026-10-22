@@ -33,7 +33,7 @@ cp .env.example .env.local
 # เริ่มรันเซิร์ฟเวอร์
 npm start
 ```
-เปิดบราวเซอร์ที่: [http://localhost:3000](http://localhost:3000)
+เปิดบราวเซอร์ที่: [http://localhost:3000](http://localhost:3000) เพื่อดูหน้า Progress ของโครงการหลัก (`project_id=1`) ส่วน Dashboard เดิมอยู่ที่ `/index.html`
 
 ### 3. Deploy ขึ้น Vercel
 - อ่านคู่มือการติดตั้งฉบับเต็มได้ที่ [`VERCEL_SUPABASE_DEPLOY_GUIDE.md`](VERCEL_SUPABASE_DEPLOY_GUIDE.md)

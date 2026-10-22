@@ -26,7 +26,7 @@
       --cyan: #9ee7ef;
       --pink: #ffc8d2;
       --shadow: 0 16px 42px rgba(31, 45, 70, .12);
-      --week-width: 54px;
+      --week-width: 72px;
       --label-width: 250px;
     }
 
@@ -849,7 +849,7 @@
     .gantt-row {
       display: grid;
       grid-template-columns: var(--label-width) repeat(var(--total-weeks, 44), var(--week-width));
-      min-height: 62px;
+      min-height: 52px;
       border-bottom: 1px solid var(--line);
       background:
         linear-gradient(90deg, transparent calc(var(--week-width) - 1px), rgba(216, 223, 236, .9) 0) var(--label-width) 0 / var(--week-width) 100%,
@@ -866,8 +866,10 @@
       position: sticky;
       left: 0;
       z-index: 6;
+      grid-column: 1;
+      grid-row: 1 / -1;
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       min-width: 0;
       border-right: 1px solid var(--line);
       background: rgba(255, 255, 255, .96);
@@ -903,27 +905,41 @@
       align-items: center;
       min-width: 0;
       min-height: 32px;
-      margin: 5px 3px;
+      margin: 5px 4px;
       border-radius: 7px;
       border: 1px solid rgba(24, 32, 51, .12);
-      color: #142033;
+      color: var(--bar-ink, #142033);
       background: var(--bar-color, var(--blue));
       padding: 6px 8px;
       font-size: 11px;
       font-weight: 700;
       line-height: 1.18;
       overflow: hidden;
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      box-shadow: 0 8px 18px rgba(31, 45, 70, .12);
+      box-shadow: 0 2px 5px rgba(31, 45, 70, .12);
     }
 
     .bar-text {
-      display: -webkit-box;
-      max-width: 100%;
+      display: block;
+      min-width: 0;
       overflow: hidden;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bar.short-bar.has-code .bar-text {
+      display: none;
+    }
+
+    .bar.short-bar {
+      padding-inline: 3px;
+    }
+
+    .bar.short-bar .subtask-code {
+      max-width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-inline: 4px;
     }
 
     .bar.has-code {
@@ -931,17 +947,16 @@
     }
 
     .bar.stage {
-      color: #fff;
+      color: var(--bar-ink, #fff);
       background: var(--stage-color, var(--purple));
       font-size: 12px;
       font-weight: 800;
-      box-shadow: 0 10px 22px rgba(112, 72, 201, .22);
+      box-shadow: 0 2px 6px rgba(31, 45, 70, .14);
     }
 
     .bar.active {
-      outline: 3px solid rgba(22, 139, 181, .38);
-      box-shadow: 0 0 0 4px rgba(22, 139, 181, .12), 0 10px 22px rgba(22, 139, 181, .18);
-      animation: pulseBar 1.2s ease-in-out infinite;
+      border-color: #168bb5;
+      box-shadow: inset 0 0 0 1px #168bb5;
     }
 
     .bar.done {
@@ -949,7 +964,7 @@
     }
 
     .bar.future {
-      opacity: .82;
+      opacity: 1;
     }
 
     .footer {
@@ -1015,12 +1030,11 @@
     }
 
     .bar.stuck {
-      animation: pulseBarStuck 1.2s ease-in-out infinite;
+      border-color: #a51d50;
     }
     .bar.overdue {
-      outline: 3px solid rgba(234, 88, 12, 0.45);
-      box-shadow: 0 0 0 4px rgba(234, 88, 12, .12), 0 10px 22px rgba(234, 88, 12, .18);
-      animation: pulseBarOverdue 1.2s ease-in-out infinite;
+      border-color: #c2410c;
+      box-shadow: inset 0 0 0 1px #c2410c;
     }
     @keyframes pulseBarOverdue {
       0%, 100% { filter: brightness(1) drop-shadow(0 0 2px rgba(234, 88, 12, 0.4)); }
@@ -1055,7 +1069,7 @@
 
       :root {
         --label-width: 210px;
-        --week-width: 50px;
+        --week-width: 64px;
       }
 
       .project-hero {
@@ -1751,8 +1765,6 @@
       const totalWeeks = months.length * 4;
       document.documentElement.style.setProperty('--total-weeks', totalWeeks);
     }
-    const weekWidth = 54;
-    const labelWidth = 250;
     const oneDay = 24 * 60 * 60 * 1000;
     
     const dateInput = document.getElementById("currentDate");
@@ -2051,6 +2063,10 @@
       bar.style.setProperty("--lane", item.lane || 1);
       bar.style.setProperty("--bar-color", item.color);
       bar.style.setProperty("--stage-color", item.color);
+      bar.style.setProperty("--bar-ink", getContrastColor(item.color));
+      bar.tabIndex = 0;
+      bar.setAttribute("aria-label", `${item.title}, ${formatRange(item)}`);
+      if (endColumn - startColumn <= 2) bar.classList.add("short-bar");
       const code = getTaskCode(item);
       if (code) {
         bar.classList.add("has-code");
@@ -2070,8 +2086,30 @@
       bar.addEventListener('mouseenter', (e) => showGanttTooltip(e, item, state));
       bar.addEventListener('mousemove', (e) => moveGanttTooltip(e));
       bar.addEventListener('mouseleave', () => hideGanttTooltip());
+      bar.addEventListener('focus', () => {
+        const rect = bar.getBoundingClientRect();
+        showGanttTooltip({ pageX: rect.left + window.scrollX, pageY: rect.bottom + window.scrollY }, item, state);
+      });
+      bar.addEventListener('blur', () => hideGanttTooltip());
       
       return bar;
+    }
+
+    // Pack tasks by their visible weekly columns, since source lane values can overlap.
+    function layoutGanttTasks(tasks) {
+      const laneEnds = [];
+      return tasks.filter(visibleOnChart).map((task, order) => ({
+        task,
+        order,
+        start: gridColumnForDate(toDate(task.start)),
+        end: gridColumnForDate(toDate(task.end), true)
+      })).sort((a, b) => a.start - b.start || a.end - b.end || a.order - b.order)
+        .map(entry => {
+          let lane = laneEnds.findIndex(end => end <= entry.start);
+          if (lane === -1) lane = laneEnds.length;
+          laneEnds[lane] = entry.end;
+          return { task: entry.task, lane: lane + 2 };
+        });
     }
 
     function renderGantt(current) {
@@ -2092,6 +2130,9 @@
       const todayLine = document.createElement("div");
       todayLine.className = "today-line";
       todayLine.dataset.label = `Today ${shortFormatter.format(current)}`;
+      const chartStyle = getComputedStyle(document.documentElement);
+      const weekWidth = parseFloat(chartStyle.getPropertyValue('--week-width'));
+      const labelWidth = parseFloat(chartStyle.getPropertyValue('--label-width'));
       todayLine.style.setProperty("--today-left", `${labelWidth + ((currentColumn - 1) * weekWidth) + (weekWidth / 2)}px`);
       ganttBody.appendChild(todayLine);
 
@@ -2099,15 +2140,16 @@
         const row = document.createElement("article");
         const state = getState(stage, current);
         const stageTasks = stage.tasks || [];
-        const maxLane = Math.max(2, ...stageTasks.map(task => (task.lane || 1) + 1));
+        const laidOutTasks = layoutGanttTasks(stageTasks);
+        const maxLane = Math.max(1, ...laidOutTasks.map(entry => entry.lane));
         row.className = "gantt-row";
-        row.style.gridTemplateRows = `repeat(${maxLane}, minmax(40px, auto))`;
+        row.style.gridTemplateRows = `repeat(${maxLane}, 44px)`;
 
         const label = document.createElement("div");
         label.className = `row-label ${state}`;
         label.innerHTML = `
           <div style="display:flex; flex-direction:column; gap:2px; min-width:0; width:100%;">
-            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(stage.title)}">${escapeHTML(stage.title)}</span>
+            <span style="overflow-wrap:anywhere;" title="${escapeHTML(stage.title)}">${escapeHTML(stage.title)}</span>
           </div>
         `;
         row.appendChild(label);
@@ -2118,9 +2160,9 @@
           row.appendChild(stageBar);
         }
 
-        stageTasks.filter(visibleOnChart).forEach(task => {
+        laidOutTasks.forEach(({ task, lane }) => {
           const taskState = getState(task, current);
-          row.appendChild(createBar({ ...task, lane: (task.lane || 1) + 1 }, taskState));
+          row.appendChild(createBar({ ...task, lane }, taskState));
         });
 
         ganttBody.appendChild(row);
