@@ -756,6 +756,169 @@
       font-weight: 700;
     }
 
+    .timeline-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .highlevel-trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 36px;
+      padding: 7px 14px;
+      border: 1px solid #bcb5eb;
+      border-radius: 999px;
+      background: #f1efff;
+      color: #40349c;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background .18s, border-color .18s, transform .18s;
+    }
+
+    .highlevel-trigger:hover {
+      background: #e5e0ff;
+      border-color: #8172d6;
+      transform: translateY(-1px);
+    }
+
+    .highlevel-trigger:focus-visible,
+    .highlevel-close:focus-visible,
+    .highlevel-zoom:focus-visible {
+      outline: 3px solid #208bb9;
+      outline-offset: 3px;
+    }
+
+    .highlevel-dialog {
+      width: min(1500px, calc(100vw - 32px));
+      max-width: none;
+      max-height: min(92vh, 1100px);
+      padding: 0;
+      border: 1px solid #d9deeb;
+      border-radius: 20px;
+      background: #fff;
+      color: var(--ink);
+      box-shadow: 0 32px 100px rgba(12, 22, 55, .32);
+      overflow: hidden;
+    }
+
+    .highlevel-dialog[open] {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .highlevel-dialog::backdrop {
+      background: rgba(12, 23, 51, .66);
+      backdrop-filter: blur(5px);
+    }
+
+    .highlevel-modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 19px 24px 17px;
+      background: linear-gradient(115deg, #f8f7ff, #eef7ff 72%, #fff);
+      border-bottom: 1px solid #dfe5f0;
+    }
+
+    .highlevel-modal-eyebrow {
+      display: block;
+      margin-bottom: 3px;
+      color: #6553ad;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .highlevel-modal-header h2 {
+      margin: 0;
+      color: #172650;
+      font-size: clamp(19px, 2vw, 26px);
+      line-height: 1.25;
+    }
+
+    .highlevel-modal-header p {
+      margin: 6px 0 0;
+      color: #5f6b82;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .highlevel-close {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid #d9dff0;
+      border-radius: 50%;
+      background: #fff;
+      color: #34415f;
+      font: inherit;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .highlevel-modal-tools {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      padding: 10px 24px;
+      border-bottom: 1px solid #e5eaf3;
+      background: #fff;
+    }
+
+    .highlevel-modal-tools span {
+      color: #52617c;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .highlevel-zoom {
+      padding: 6px 11px;
+      border: 1px solid #ccd5e8;
+      border-radius: 8px;
+      background: #f7f9fe;
+      color: #243961;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .highlevel-image-scroll {
+      min-height: 0;
+      overflow: auto;
+      padding: 16px;
+      background: #e9eef8;
+    }
+
+    .highlevel-image {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid #ced7e9;
+      background: #fff;
+      box-shadow: 0 8px 30px rgba(28, 45, 83, .1);
+    }
+
+    .highlevel-image.is-zoomed {
+      width: 1919px;
+      max-width: none;
+    }
+
     .today-chip {
       display: inline-flex;
       align-items: center;
@@ -1077,6 +1240,20 @@
       .timeline-toolbar {
         grid-template-columns: 1fr;
         display: grid;
+      }
+
+      .timeline-actions {
+        justify-content: flex-start;
+      }
+
+      .highlevel-modal-header,
+      .highlevel-modal-tools {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+
+      .highlevel-image-scroll {
+        padding: 8px;
       }
 
       .topbar {
@@ -1608,7 +1785,12 @@
           <h2>Weekly Gantt Chart</h2>
           <p>แต่ละเดือนแบ่งเป็น 4 Week เพื่อให้เห็นตำแหน่งวันที่ปัจจุบันบนแผนงาน</p>
         </div>
-        <div id="todayChip" class="today-chip">Today</div>
+        <div class="timeline-actions">
+          <button id="openHighLevel" class="highlevel-trigger" type="button" aria-haspopup="dialog" aria-controls="highLevelDialog">
+            <span aria-hidden="true">▦</span> High Level Project Timeline
+          </button>
+          <div id="todayChip" class="today-chip">Today</div>
+        </div>
       </div>
       <div id="timelineScroll" class="timeline-scroll">
         <div class="gantt">
@@ -1658,6 +1840,24 @@
       </div>
     </section>
   </main>
+
+  <dialog id="highLevelDialog" class="highlevel-dialog" aria-labelledby="highLevelTitle" aria-describedby="highLevelDescription">
+    <div class="highlevel-modal-header">
+      <div>
+        <span class="highlevel-modal-eyebrow">Excel reference · Project overview</span>
+        <h2 id="highLevelTitle">High Level Project Timeline</h2>
+        <p id="highLevelDescription">ภาพรวมจากชีต High Level Project Timeline ในไฟล์แผนงาน</p>
+      </div>
+      <button id="closeHighLevel" class="highlevel-close" type="button" aria-label="ปิดหน้าต่าง">×</button>
+    </div>
+    <div class="highlevel-modal-tools">
+      <span>ตัวเลขในภาพเป็นข้อมูลอ้างอิงจากไฟล์ Excel ไม่ใช่สถานะปัจจุบันของหน้า Progress</span>
+      <button id="toggleHighLevelZoom" class="highlevel-zoom" type="button" aria-pressed="false">ดูขนาดจริง 100%</button>
+    </div>
+    <div class="highlevel-image-scroll">
+      <img id="highLevelImage" class="highlevel-image" src="assets/high-level-project-timeline.png" width="1919" height="1079" loading="lazy" alt="High Level Project Timeline จาก Excel แสดงช่วงงานหลักรายเดือนตั้งแต่ Apr ถึง Sep พร้อมหมุดหมายหลัก 4 จุด">
+    </div>
+  </dialog>
 
   <script src="workplan_metrics.js"></script>
   <script>
@@ -2861,6 +3061,22 @@
       dateInput.value = dateValue(new Date());
       loadTimelineData();
       dateInput.addEventListener("change", renderStatus);
+
+      const highLevelTrigger = document.getElementById("openHighLevel");
+      const highLevelDialog = document.getElementById("highLevelDialog");
+      const highLevelImage = document.getElementById("highLevelImage");
+      const highLevelZoom = document.getElementById("toggleHighLevelZoom");
+      highLevelTrigger.addEventListener("click", () => highLevelDialog.showModal());
+      document.getElementById("closeHighLevel").addEventListener("click", () => highLevelDialog.close());
+      highLevelDialog.addEventListener("click", event => {
+        if (event.target === highLevelDialog) highLevelDialog.close();
+      });
+      highLevelDialog.addEventListener("close", () => highLevelTrigger.focus());
+      highLevelZoom.addEventListener("click", () => {
+        const zoomed = highLevelImage.classList.toggle("is-zoomed");
+        highLevelZoom.setAttribute("aria-pressed", String(zoomed));
+        highLevelZoom.textContent = zoomed ? "พอดีหน้าต่าง" : "ดูขนาดจริง 100%";
+      });
     });
   </script>
 </body>

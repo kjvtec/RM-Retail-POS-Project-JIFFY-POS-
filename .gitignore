@@ -17,6 +17,7 @@ node_modules/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+~$*.xlsx
 
 # Logs
 *.log

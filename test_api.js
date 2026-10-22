@@ -100,6 +100,13 @@ async function runTests() {
       console.error('❌ Test 2.2 Failed: Status', resTimeline.status);
     }
 
+    assert.match(resTimeline.body, /id="openHighLevel"[^>]*aria-controls="highLevelDialog"/);
+    assert.match(resTimeline.body, /<dialog id="highLevelDialog"/);
+    const resHighLevelImage = await request('/assets/high-level-project-timeline.png');
+    assert.equal(resHighLevelImage.status, 200);
+    assert.match(resHighLevelImage.headers['content-type'], /image\/png/);
+    console.log('✅ High Level Project Timeline dialog and Excel reference image are available.');
+
     // Test 2.3: Check admin login page
     const resLogin = await request('/admin/login');
     if (resLogin.status === 200 && resLogin.body.includes('RM-Retail POS Admin Portal')) {
