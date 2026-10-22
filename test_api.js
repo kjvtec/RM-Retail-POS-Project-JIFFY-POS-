@@ -24,9 +24,9 @@ async function runTests() {
   const sheet = await zip.file('xl/worksheets/sheet1.xml').async('string');
   const cell = ref => (sheet.match(new RegExp(`<c r="${ref}"[^>]*>[\\s\\S]*?<\\/c>`)) || [])[0] || '';
   assert.match(cell('E4'), /AVERAGE\(E5,E30,E35,E93\)/);
-  assert.match(cell('G3'), /Behind Plan 7 pp/);
+  assert.match(cell('G3'), /Behind Plan 7%/);
   assert.match(cell('H240'), /NETWORKDAYS\(I240,J240\)/);
-  console.log('✅ Excel formula, 23% / 16% / 7 pp progress, and reference-format export verified.');
+  console.log('✅ Excel formula, 23% / 16% / Behind Plan 7% display, and reference-format export verified.');
 
   // Test 1: Verify require of api/index.js
   try {

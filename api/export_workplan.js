@@ -104,11 +104,11 @@ async function buildWorkplanExcel(timeline, asOf) {
     rowXml = setCell(rowXml, `F${row}`, progress.actual);
     const status = kind === 'project'
       ? metrics.planned > metrics.actual
-        ? `Behind Plan ${Math.floor(metrics.planned) - Math.floor(metrics.actual)} pp`
+        ? `Behind Plan ${Math.floor(metrics.planned) - Math.floor(metrics.actual)}%`
         : 'On Plan'
       : progressStatus(progress.planned, progress.actual);
     rowXml = setCell(rowXml, `G${row}`, status, 'formula-text', kind === 'project'
-      ? 'IF(E3>F3,"Behind Plan "&(ROUNDDOWN(E3*100,0)-ROUNDDOWN(F3*100,0))&" pp","On Plan")'
+      ? 'IF(E3>F3,"Behind Plan "&(ROUNDDOWN(E3*100,0)-ROUNDDOWN(F3*100,0))&"%","On Plan")'
       : null);
     if (kind === 'project') {
       const starts = timeline.stages.map(stage => stage.start).filter(Boolean).sort();

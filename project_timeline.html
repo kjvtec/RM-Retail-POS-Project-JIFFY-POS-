@@ -192,6 +192,9 @@
     .current-list li { border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; background: #fff; line-height: 1.4; }
     .current-kind { display: inline-block; margin-right: 8px; color: #236b8b; font-size: 11px; font-weight: 900; text-transform: uppercase; }
     .current-range { display: block; color: var(--muted); font-size: 12px; margin-top: 3px; }
+    .current-progress { display: flex; align-items: center; gap: 10px; margin-top: 9px; font-size: 12px; font-weight: 800; color: #334155; }
+    .current-progress-track { height: 9px; flex: 1; min-width: 35px; background: #e2e8f0; border-radius: 999px; overflow: hidden; }
+    .current-progress-fill { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #4e46b5, #168bb5); }
 
     .hero-percent {
       font-size: clamp(46px, 6vw, 74px);
@@ -1503,9 +1506,9 @@
         <ul id="heroBullets" class="hero-bullets"></ul>
       </div>
       <div class="hero-meter">
-        <div class="hero-stat"><div class="hero-label">Baseline Planned</div><div id="heroPlanned" class="hero-percent">0%</div><div id="heroPlannedMeta" class="hero-meta">Excel column E</div></div>
-        <div class="hero-stat"><div class="hero-label">Actual · Work Complete</div><div id="heroPercent" class="hero-percent">0%</div><div id="heroMeta" class="hero-meta">Excel column F</div></div>
-        <div class="hero-stat"><div class="hero-label">Behind Plan</div><div id="heroGap" class="hero-percent">0 pp</div><div id="heroGapMeta" class="hero-meta">Planned − Actual</div></div>
+        <div class="hero-stat"><div class="hero-label">Baseline Planned</div><div id="heroPlanned" class="hero-percent">0%</div></div>
+        <div class="hero-stat"><div class="hero-label">Actual · Work Complete</div><div id="heroPercent" class="hero-percent">0%</div></div>
+        <div class="hero-stat"><div class="hero-label">Behind Plan</div><div id="heroGap" class="hero-percent">0%</div></div>
       </div>
     </section>
 
@@ -1543,17 +1546,6 @@
         <p class="eyebrow">Current Process</p>
         <h2 id="currentStage" class="stage-name">-</h2>
         <ul id="currentProcessList" class="current-list"></ul>
-        <div id="currentStatePill" class="current-state-pill">-</div>
-        <p id="currentRange" class="stage-range">-</p>
-        <div class="progress-wrap">
-          <div class="progress-label">
-            <span>First Active Milestone Progress</span>
-            <span id="currentProgress">0%</span>
-          </div>
-          <div class="progress-track">
-            <div id="progressFill" class="progress-fill"></div>
-          </div>
-        </div>
       </div>
       <div class="status-next">
         <p class="eyebrow">Next Milestone</p>
@@ -1583,7 +1575,7 @@
               <th>ช่วงเวลา</th>
               <th>สถานะตอนนี้</th>
               <th>ใช้เวลา</th>
-              <th>% ของภาพรวม</th>
+              <th>% Work Complete (Actual)</th>
             </tr>
           </thead>
           <tbody id="summaryRows"></tbody>
@@ -1615,7 +1607,7 @@
         </div>
         <div id="todayChip" class="today-chip">Today</div>
       </div>
-      <div class="timeline-scroll">
+      <div id="timelineScroll" class="timeline-scroll">
         <div class="gantt">
           <div id="ganttHeader" class="gantt-header"></div>
           <div id="ganttBody" class="gantt-body"></div>
@@ -1789,15 +1781,13 @@
     const overallSummary = document.getElementById("overallSummary");
     const ganttHeader = document.getElementById("ganttHeader");
     const ganttBody = document.getElementById("ganttBody");
+    const timelineScroll = document.getElementById("timelineScroll");
     const todayChip = document.getElementById("todayChip");
     const heroTitle = document.getElementById("heroTitle");
     const heroBullets = document.getElementById("heroBullets");
     const heroPercent = document.getElementById("heroPercent");
     const heroPlanned = document.getElementById("heroPlanned");
-    const heroPlannedMeta = document.getElementById("heroPlannedMeta");
     const heroGap = document.getElementById("heroGap");
-    const heroGapMeta = document.getElementById("heroGapMeta");
-    const heroMeta = document.getElementById("heroMeta");
     const exportExcel = document.getElementById("exportExcel");
     const currentProcessList = document.getElementById("currentProcessList");
     const daysPassed = document.getElementById("daysPassed");
@@ -1965,7 +1955,7 @@
       const roundedGap = metrics ? Math.floor(metrics.planned) - Math.floor(metrics.actual) : 0;
       return {
         label: behind ? "Behind Plan" : "On Plan",
-        note: behind ? `ช้ากว่า Baseline ${roundedGap} จุดเปอร์เซ็นต์ (ค่าจริง ${metrics.gap.toFixed(2)} pp)` : "Actual เป็นไปตาม Baseline",
+        note: behind ? `ช้ากว่า Baseline ${roundedGap}%` : "Actual เป็นไปตาม Baseline",
         atRisk: behind
       };
     }
@@ -1992,7 +1982,7 @@
     }
 
     function renderHeader() {
-      ganttHeader.innerHTML = '<div class="corner">Process / Weekly Timeline</div>';
+      ganttHeader.innerHTML = '<div class="corner">WBS / Task Name</div>';
       months.forEach((month, index) => {
         const monthCell = document.createElement("div");
         monthCell.className = "month-cell";
@@ -2168,7 +2158,7 @@
         label.className = `row-label ${state}`;
         label.innerHTML = `
           <div style="display:flex; flex-direction:column; gap:2px; min-width:0; width:100%;">
-            <span style="overflow-wrap:anywhere;" title="${escapeHTML(stage.title)}">${escapeHTML(stage.title)}</span>
+            <span style="overflow-wrap:anywhere;" title="${escapeHTML(stage.title)}">${escapeHTML(String(stage.wbs || ''))} ${escapeHTML(stage.title)}</span>
           </div>
         `;
         row.appendChild(label);
@@ -2186,11 +2176,21 @@
 
         ganttBody.appendChild(row);
       });
+
+      // Center the selected date in the visible timeline after the grid has laid out.
+      requestAnimationFrame(() => {
+        const available = timelineScroll.clientWidth;
+        if (!available) return;
+        const todayX = parseFloat(todayLine.style.getPropertyValue('--today-left'));
+        const fixedLabel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-width'));
+        timelineScroll.scrollLeft = Math.max(0, todayX - (available + fixedLabel) / 2);
+      });
     }
 
     function renderSummary(current) {
       const overall = getOverallRange();
       const overallDays = Math.round((overall.end - overall.start) / oneDay) + 1;
+      const metrics = progressModel ? WorkplanMetrics.calculate(stages, progressModel, dateInput.value) : null;
       summaryRows.innerHTML = "";
       overallSummary.textContent = `ภาพรวม ${formatter.format(overall.start)} - ${formatter.format(overall.end)} · ${overallDays} วัน`;
 
@@ -2208,7 +2208,9 @@
       stages.forEach(stage => {
         const state = getState(stage, current);
         const days = durationDays(stage);
-        const percent = (days / overallDays) * 100;
+        const row = progressModel?.stages?.[String(stage.id)];
+        const percent = metrics?.byRow?.[row] ? metrics.byRow[row].actual * 100 : (Number(stage.percent_work_complete) || 0);
+        const notStarted = current < toDate(stage.start) && percent === 0;
         const stageTasks = stage.tasks || [];
         const subtasks = stageTasks;
         const isExpandable = subtasks.length > 0;
@@ -2231,9 +2233,9 @@
           <td>
             <div class="summary-progress">
               <div class="summary-track">
-                <div class="summary-fill ${state}" style="--percent: ${percent.toFixed(2)}%"></div>
+                <div class="summary-fill ${state}" style="--percent: ${Math.min(100, percent).toFixed(2)}%"></div>
               </div>
-              <span class="summary-value" style="font-weight: 800; font-size: 15px; color: var(--primary); text-shadow: 0 1px 1px rgba(0,0,0,0.05);">${percent.toFixed(1)}%</span>
+              <span class="summary-value" style="font-weight: 800; font-size: 15px; color: var(--primary);">${notStarted ? 'ยังไม่เริ่ม' : `${Math.floor(percent)}%`}</span>
             </div>
           </td>
         `;
@@ -2258,7 +2260,9 @@
             const badgeHTML = code ? `<span class="subtask-pill" style="background:${task.color};color:${textColor}">${code}</span>` : '';
             const taskState = getState(task, current);
             const taskDays = durationDays(task);
-            const taskProgress = getProgress(task, current);
+            const taskRow = progressModel?.tasks?.[String(task.id)];
+            const taskProgress = metrics?.byRow?.[taskRow] ? metrics.byRow[taskRow].actual * 100 : (Number(task.percent_work_complete) || 0);
+            const taskNotStarted = current < toDate(task.start) && taskProgress === 0;
             const subtaskRow = document.createElement("tr");
             subtaskRow.className = "summary-subtask-row";
             subtaskRow.innerHTML = `
@@ -2277,9 +2281,9 @@
               <td>
                 <div class="summary-progress">
                   <div class="summary-track">
-                    <div class="summary-fill ${taskState}" style="--percent: ${taskProgress}%"></div>
+                    <div class="summary-fill ${taskState}" style="--percent: ${Math.min(100, taskProgress).toFixed(2)}%"></div>
                   </div>
-                  <span class="summary-value" style="font-weight: 800; font-size: 15px; color: var(--active); text-shadow: 0 1px 1px rgba(0,0,0,0.05);">${taskProgress}%</span>
+                  <span class="summary-value" style="font-weight: 800; font-size: 15px; color: var(--active);">${taskNotStarted ? 'ยังไม่เริ่ม' : `${Math.floor(taskProgress)}%`}</span>
                 </div>
               </td>
             `;
@@ -2375,17 +2379,13 @@
 
     function renderStatus() {
       const current = toDate(dateInput.value);
-      const currentStatePill = document.getElementById("currentStatePill");
 
       if (stages.length === 0) {
         heroTitle.textContent = "ไม่มีแผนงานโครงการ";
         heroBullets.innerHTML = "<li>กรุณาตั้งค่าเชื่อมโยงฐานข้อมูล หรือเพิ่มขั้นตอนงานหลักในระบบหลังบ้าน</li>";
         heroPercent.textContent = "0%";
         heroPlanned.textContent = "0%";
-        heroGap.textContent = "0 pp";
-        heroMeta.textContent = "-";
-        heroPlannedMeta.textContent = "-";
-        heroGapMeta.textContent = "-";
+        heroGap.textContent = "0%";
         
         daysPassed.textContent = "-";
         daysPassedNote.textContent = "-";
@@ -2404,12 +2404,6 @@
 
         document.getElementById("currentStage").textContent = "-";
         currentProcessList.innerHTML = "";
-        currentStatePill.className = "current-state-pill future";
-        currentStatePill.textContent = "ไม่มีขั้นตอนหลักที่อยู่ระหว่างดำเนินการ";
-        document.getElementById("currentRange").textContent = "-";
-        document.getElementById("currentProgress").textContent = "0%";
-        document.getElementById("progressFill").style.width = "0%";
-        document.getElementById("progressFill").className = "progress-fill";
         todayChip.textContent = `Today: ${formatter.format(current)}`;
 
         document.getElementById("nextStage").textContent = "ไม่มีงานถัดไป";
@@ -2424,10 +2418,8 @@
       const currentStage = activeStages[0] || findCurrentStage(current);
       const activeProcesses = activeStages.flatMap(stage => (stage.tasks || []).filter(task => Number(task.level) === 2 && toDate(task.start) <= current && toDate(task.end) >= current && parseInt(task.is_completed) !== 1));
       const nextStage = findNextStage(current, currentStage);
-      const progress = getProgress(currentStage, current);
       const overallProgress = getOverallProgress(current);
       const metrics = progressModel ? WorkplanMetrics.calculate(stages, progressModel, dateInput.value) : null;
-      const currentStageState = getState(currentStage, current);
 
       heroTitle.textContent = metrics ? `Actual ${Math.floor(metrics.actual)}% · Baseline ${Math.floor(metrics.planned)}%` : 'กำลังคำนวณข้อมูลโครงการ';
       heroBullets.innerHTML = `
@@ -2436,26 +2428,20 @@
         <li>ข้อมูล ณ วันที่ ${formatter.format(current)}</li>
       `;
       heroPlanned.textContent = metrics ? `${Math.floor(metrics.planned)}%` : '-';
-      heroPlannedMeta.textContent = metrics ? `ค่าจริง ${metrics.planned.toFixed(2)}%` : '-';
       heroPercent.textContent = metrics ? `${Math.floor(metrics.actual)}%` : '-';
-      heroMeta.textContent = metrics ? `ค่าจริง ${metrics.actual.toFixed(2)}%` : '-';
-      heroGap.textContent = metrics ? `${Math.max(0, Math.floor(metrics.planned) - Math.floor(metrics.actual))} pp` : '-';
-      heroGapMeta.textContent = metrics ? `ค่าจริง ${metrics.gap.toFixed(2)} จุดเปอร์เซ็นต์` : '-';
+      heroGap.textContent = metrics ? `${Math.max(0, Math.floor(metrics.planned) - Math.floor(metrics.actual))}%` : '-';
       exportExcel.href = `api.php?action=export_timeline_excel&project_id=${projectId}&as_of=${encodeURIComponent(dateInput.value)}`;
       renderSnapshot(current, currentStage, overallProgress, metrics, activeProcesses);
 
       document.getElementById("currentStage").textContent = activeStages.length || activeProcesses.length ? `${activeStages.length} Milestone · ${activeProcesses.length} Process` : currentStage.title;
       currentProcessList.innerHTML = activeStages.length || activeProcesses.length ? [
-        ...activeStages.map(stage => `<li><span class="current-kind">Milestone</span><strong>${escapeHTML(stage.wbs || '')} ${escapeHTML(stage.title)}</strong><span class="current-range">${escapeHTML(formatRange(stage))}</span></li>`),
+        ...activeStages.map(stage => {
+          const row = progressModel?.stages?.[String(stage.id)];
+          const actual = metrics?.byRow?.[row] ? metrics.byRow[row].actual * 100 : (Number(stage.percent_work_complete) || 0);
+          return `<li><span class="current-kind">Milestone</span><strong>${escapeHTML(String(stage.wbs || ''))} ${escapeHTML(stage.title)}</strong><span class="current-range">${escapeHTML(formatRange(stage))}</span><div class="current-progress"><span>Actual ${Math.floor(actual)}%</span><span class="current-progress-track"><span class="current-progress-fill" style="width:${Math.min(100, actual).toFixed(2)}%"></span></span></div></li>`;
+        }),
         ...activeProcesses.map(task => `<li><span class="current-kind">Process</span><strong>${escapeHTML(task.wbs || '')} ${escapeHTML(task.title)}</strong><span class="current-range">${escapeHTML(formatRange(task))}</span></li>`)
       ].join('') : '<li>ไม่มี Milestone หรือ Process ที่อยู่ระหว่างดำเนินการ</li>';
-      currentStatePill.className = `current-state-pill ${currentStageState}`;
-      currentStatePill.textContent = `วันนี้อยู่ในขั้นตอน: ${getStateLabel(currentStageState)}`;
-      document.getElementById("currentRange").textContent = formatRange(currentStage);
-      document.getElementById("currentProgress").textContent = `${progress}%`;
-      const progressFill = document.getElementById("progressFill");
-      progressFill.style.width = `${progress}%`;
-      progressFill.className = `progress-fill ${currentStageState}`;
       todayChip.textContent = `Today: ${formatter.format(current)} · ${currentStage.title}`;
 
       if (nextStage) {
