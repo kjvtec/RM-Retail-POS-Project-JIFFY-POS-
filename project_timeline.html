@@ -1974,12 +1974,138 @@
       font-size: 13px;
       color: #334155;
     }
+    .task-detail-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .task-detail-header-edit {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .task-detail-header-edit:hover {
+      background: #dbeafe;
+      color: #1e40af;
+      transform: translateY(-1px);
+    }
+    .task-detail-row-dates {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin: 2px 0;
+    }
+    .detail-inline-wrapper {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      flex: 1;
+    }
+    .detail-label-inline {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #334155;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .detail-dates-highlight {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      border-radius: 8px;
+      color: #3730a3;
+      font-size: 13.5px;
+      font-weight: 700;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .detail-dates-highlight:hover {
+      background: #e0e7ff;
+      border-color: #a5b4fc;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(99, 102, 241, 0.15);
+    }
+    .detail-duration-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #4338ca;
+      color: #ffffff;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    .detail-dates-edit-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      border-radius: 6px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      margin-left: auto;
+    }
+    .detail-dates-edit-btn:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
     .task-detail-footer {
       display: flex;
       justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
       border-top: 1px solid #f1f5f9;
-      padding-top: 14px;
-      margin-top: 4px;
+      padding-top: 16px;
+      margin-top: 6px;
+    }
+    .btn-detail-edit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #5146b6 0%, #3e32a0 100%);
+      color: #ffffff !important;
+      font-size: 13.5px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(81, 70, 182, 0.28);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-detail-edit:hover {
+      background: linear-gradient(135deg, #4338ca 0%, #312e81 100%);
+      box-shadow: 0 6px 16px rgba(81, 70, 182, 0.42);
+      transform: translateY(-1px);
     }
     .btn-detail-close {
       padding: 9px 20px;
@@ -2278,7 +2404,10 @@
   <dialog id="taskDetailDialog" class="task-detail-dialog" aria-labelledby="taskDetailTitle">
     <div class="task-detail-card">
       <div class="task-detail-header">
-        <span id="taskDetailBadge" class="task-detail-badge">Task</span>
+        <div class="task-detail-header-left">
+          <span id="taskDetailBadge" class="task-detail-badge">Task</span>
+          <a id="btnHeaderEditTask" href="admin/login.html" class="task-detail-header-edit" title="เข้าสู่ระบบเพื่อแก้ไข">✏️ แก้ไข</a>
+        </div>
         <button id="closeTaskDetail" type="button" class="task-detail-close" aria-label="ปิด">✕</button>
       </div>
       <h3 id="taskDetailTitle" class="task-detail-title">-</h3>
@@ -2290,11 +2419,12 @@
             <span id="taskDetailAssignee" class="detail-value">-</span>
           </div>
         </div>
-        <div class="task-detail-row">
+        <div class="task-detail-row-dates">
           <span class="detail-icon">📅</span>
-          <div class="detail-content">
-            <span class="detail-label">ระยะเวลาดำเนินการ</span>
-            <span id="taskDetailDates" class="detail-value">-</span>
+          <div class="detail-inline-wrapper">
+            <span class="detail-label-inline">ช่วงเวลา:</span>
+            <span id="taskDetailDates" class="detail-dates-highlight" title="คลิกเพื่อแก้ไข (เข้าสู่ระบบ)">-</span>
+            <a id="btnDatesEditTask" href="admin/login.html" class="detail-dates-edit-btn" title="แก้ไขช่วงเวลา (เข้าสู่ระบบ)">✏️ แก้ไข</a>
           </div>
         </div>
         <div class="task-detail-row">
@@ -2326,6 +2456,10 @@
         </div>
       </div>
       <div class="task-detail-footer">
+        <a id="btnFooterEditTask" href="admin/login.html" class="btn-detail-edit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display: inline-block; vertical-align: middle;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+          แก้ไขข้อมูล (เข้าสู่ระบบ)
+        </a>
         <button id="closeTaskDetailBtn" type="button" class="btn-detail-close">ปิดหน้าต่าง</button>
       </div>
     </div>
@@ -2768,8 +2902,19 @@
 
       if (dates) {
         const duration = durationDays(item);
-        dates.textContent = `${formatRange(item)} (${duration} วัน)`;
+        dates.innerHTML = `<span>${formatRange(item)}</span> <span class="detail-duration-pill">(${duration} วัน)</span>`;
+        dates.style.cursor = 'pointer';
+        dates.title = 'คลิกเพื่อแก้ไขช่วงเวลา (เข้าสู่ระบบ)';
+        dates.onclick = () => { window.location.href = 'admin/login.html'; };
       }
+
+      const loginUrl = 'admin/login.html';
+      const btnHeaderEdit = document.getElementById("btnHeaderEditTask");
+      const btnDatesEdit = document.getElementById("btnDatesEditTask");
+      const btnFooterEdit = document.getElementById("btnFooterEditTask");
+      if (btnHeaderEdit) btnHeaderEdit.href = loginUrl;
+      if (btnDatesEdit) btnDatesEdit.href = loginUrl;
+      if (btnFooterEdit) btnFooterEdit.href = loginUrl;
 
       // Progress calculation - integer only
       let pct = 0;
@@ -2869,6 +3014,10 @@
       bar.addEventListener('click', (e) => {
         e.stopPropagation();
         openTaskDetail(item, state);
+      });
+      bar.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        window.location.href = 'admin/login.html';
       });
       bar.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
