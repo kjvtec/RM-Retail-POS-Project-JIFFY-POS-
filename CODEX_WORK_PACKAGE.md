@@ -90,7 +90,7 @@ flowchart TD
 | `SUPABASE_URL` | **Yes** | Project URL จาก Supabase | `https://abcdefghijklm.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Yes** | Service Role Secret Key (สำหรับ Backend CRUD) | `eyJhbGciOi...` |
 | `SUPABASE_ANON_KEY` | **Yes** | Public Anon Key จาก Supabase | `eyJhbGciOi...` |
-| `JWT_SECRET` | **Yes** | สตริงสุ่มความยาว 32+ ตัวอักษรสำหรับเซ็น Token | `nigiwai_secret_jwt_random_key_2026` |
+| `JWT_SECRET` | **Yes** | สตริงสุ่มความยาว 32+ ตัวอักษรสำหรับเซ็น Token | `jffpos_jwt_secret_status_rm_retail_2026_xyz` |
 | `PORT` | Optional | พอร์ตสำหรับ Local Server (ค่าเริ่มต้น 3000) | `3000` |
 
 ---

@@ -1,4 +1,4 @@
-# Nigiwai Project Management & Gantt Timeline (Vercel & Supabase Edition)
+# RM-Retail POS Project (JIFFY POS) & Gantt Timeline (Vercel & Supabase Edition)
 
 ระบบบริหารจัดการโครงการและแผนภูมิความคืบหน้า (Project Timeline Gantt Chart) สถาปัตยกรรมคลาวด์เซิร์ฟเวอร์เลส (Serverless) ทำงานบน **Vercel** ร่วมกับฐานข้อมูล **Supabase (PostgreSQL)**
 

@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 echo ===================================================================
-echo   Nigiwai Project Management - One-Click Deployment Helper
+echo   RM-Retail POS Project (JIFFY POS) - One-Click Deployment Helper
 echo ===================================================================
 echo.
 echo เลือกลำดับงานที่ต้องการ:

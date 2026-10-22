@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin Login Page
- * Nigiwai Project Management
+ * RM-Retail POS Project (JIFFY POS)
  */
 
 require_once '../config.php';
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เข้าสู่ระบบ - Nigiwai Project Management</title>
+    <title>เข้าสู่ระบบ - RM-Retail POS Project (JIFFY POS)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -224,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="login-container">
         <div class="header">
-            <h1>Nigiwai Admin Portal</h1>
+            <h1>RM-Retail POS Admin Portal</h1>
             <p>กรุณาลงชื่อเข้าใช้งานเพื่อเริ่มจัดการแผนงาน</p>
         </div>
 

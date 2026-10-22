@@ -1,7 +1,7 @@
 # คู่มือการติดตั้งและ Deploy ระบบขึ้น Vercel โดยใช้ Supabase
 # (Vercel + Supabase Deployment Guide)
 
-เอกสารนี้จะแนะนำขั้นตอนการแปลงและนำระบบ **Nigiwai Project Management & Timeline Gantt** ขึ้นใช้งานจริงบนคลาวด์ระดับโปรดักชันด้วย **Vercel** ร่วมกับฐานข้อมูล **Supabase (PostgreSQL)** อย่างละเอียดทีละขั้นตอน
+เอกสารนี้จะแนะนำขั้นตอนการแปลงและนำระบบ **RM-Retail POS Project (JIFFY POS) & Timeline Gantt** ขึ้นใช้งานจริงบนคลาวด์ระดับโปรดักชันด้วย **Vercel** ร่วมกับฐานข้อมูล **Supabase (PostgreSQL)** อย่างละเอียดทีละขั้นตอน
 
 ---
 
@@ -32,7 +32,7 @@ flowchart LR
 
 1. เข้าสู่ระบบหรือสมัครสมาชิกที่ [https://supabase.com](https://supabase.com)
 2. กดปุ่ม **"New Project"**
-   - **Name**: `nigiwai-pmg` (หรือชื่อตามต้องการ)
+   - **Name**: `jffpos-status` (หรือชื่อตามต้องการ)
    - **Database Password**: ตั้งรหัสผ่านฐานข้อมูลและจดบันทึกไว้
    - **Region**: เลือก `Singapore (ap-southeast-1)` (เพื่อให้ความเร็วสูงสุดสำหรับประเทศไทย)
    - กด **"Create new project"** และรอประมาณ 1-2 นาทีจนโปรเจกต์พร้อมใช้งาน

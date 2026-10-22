@@ -1,5 +1,5 @@
 /**
- * Local Development Server for Nigiwai Project Management
+ * Local Development Server for RM-Retail POS Project (JIFFY POS)
  * Simulates Vercel Serverless environment locally
  */
 
@@ -110,7 +110,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(`🚀 Nigiwai Project Management Server running!`);
+  console.log(`🚀 RM-Retail POS Project (JIFFY POS) Server running!`);
   console.log(`📡 Local URL: http://localhost:${PORT}`);
   console.log(`📂 Admin URL: http://localhost:${PORT}/admin/`);
   console.log(`⚙️  Supabase URL: ${process.env.SUPABASE_URL || '(Not set yet - check .env)'}`);

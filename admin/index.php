@@ -1,7 +1,7 @@
 <?php
 /**
  * Admin Control Panel Dashboard (Version 2.0)
- * Nigiwai Project Management
+ * RM-Retail POS Project (JIFFY POS)
  * Supports Multiple Projects, Assignees, Drag & Drop sorting, and Color Presets
  */
 
@@ -22,7 +22,7 @@ if (isset($_GET['logout'])) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>แผงควบคุมระบบ - Nigiwai Project Management</title>
+  <title>แผงควบคุมระบบ - RM-Retail POS Project (JIFFY POS)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -757,7 +757,7 @@ if (isset($_GET['logout'])) {
   <!-- Header -->
   <header class="header">
     <div class="header-title">
-      <h1>Nigiwai Project Management</h1>
+      <h1>RM-Retail POS Project (JIFFY POS)</h1>
       <p>แผงควบคุมสำหรับจัดการโครงการ ขั้นตอนงาน และงานย่อย (Admin Panel)</p>
     </div>
     <div class="header-user">
@@ -1328,7 +1328,7 @@ if (isset($_GET['logout'])) {
         const projectExists = projectsList.some(p => p.id == currentProjectId);
         if (!currentProjectId || !projectExists) {
           currentProjectId = null;
-          localStorage.removeItem('nigiwai_admin_project_id');
+          localStorage.removeItem('jffpos_admin_project_id');
           updateProjectDisplay();
           renderProjectSelectionDashboard();
           return;
@@ -1344,7 +1344,7 @@ if (isset($_GET['logout'])) {
     function switchProject(id) {
       if (!id) return;
       currentProjectId = parseInt(id);
-      localStorage.setItem('nigiwai_admin_project_id', currentProjectId);
+      localStorage.setItem('jffpos_admin_project_id', currentProjectId);
       updateProjectDisplay();
       
       // Update URL query parameter without full reload
@@ -1757,7 +1757,7 @@ if (isset($_GET['logout'])) {
           
           if (currentProjectId === id) {
             currentProjectId = null;
-            localStorage.removeItem('nigiwai_admin_project_id');
+            localStorage.removeItem('jffpos_admin_project_id');
             const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
             window.history.replaceState({ path: newUrl }, '', newUrl);
           }
@@ -2377,12 +2377,12 @@ if (isset($_GET['logout'])) {
       const urlProjectId = parseInt(urlParams.get('project_id'));
       if (urlProjectId && urlProjectId !== currentProjectId) {
         currentProjectId = urlProjectId;
-        localStorage.setItem('nigiwai_admin_project_id', currentProjectId);
+        localStorage.setItem('jffpos_admin_project_id', currentProjectId);
         updateProjectDisplay();
         loadData();
       } else if (!urlProjectId && currentProjectId) {
         currentProjectId = null;
-        localStorage.removeItem('nigiwai_admin_project_id');
+        localStorage.removeItem('jffpos_admin_project_id');
         updateProjectDisplay();
         renderProjectSelectionDashboard();
       }
@@ -2395,10 +2395,10 @@ if (isset($_GET['logout'])) {
       
       if (urlProjectId) {
         currentProjectId = urlProjectId;
-        localStorage.setItem('nigiwai_admin_project_id', currentProjectId);
+        localStorage.setItem('jffpos_admin_project_id', currentProjectId);
       } else {
         currentProjectId = null;
-        localStorage.removeItem('nigiwai_admin_project_id');
+        localStorage.removeItem('jffpos_admin_project_id');
       }
 
       await loadAssignees();

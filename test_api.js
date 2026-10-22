@@ -1,5 +1,5 @@
 /**
- * Automated Verification Test for Nigiwai Project Management (Vercel + Supabase)
+ * Automated Verification Test for RM-Retail POS Project (JIFFY POS) (Vercel + Supabase)
  */
 
 const http = require('http');
@@ -51,7 +51,7 @@ async function runTests() {
   try {
     // Test 2.1: Check static index.html
     const resHome = await request('/');
-    if (resHome.status === 200 && resHome.body.includes('Nigiwai Project Management')) {
+    if (resHome.status === 200 && resHome.body.includes('RM-Retail POS Project (JIFFY POS)')) {
       console.log('✅ Test 2.1: Static index.html served correctly (200 OK).');
     } else {
       console.error('❌ Test 2.1 Failed: Status', resHome.status);
@@ -67,7 +67,7 @@ async function runTests() {
 
     // Test 2.3: Check admin login page
     const resLogin = await request('/admin/login');
-    if (resLogin.status === 200 && resLogin.body.includes('Nigiwai Admin Portal')) {
+    if (resLogin.status === 200 && resLogin.body.includes('RM-Retail POS Admin Portal')) {
       console.log('✅ Test 2.3: Rewrite /admin/login -> admin/login.html works (200 OK).');
     } else {
       console.error('❌ Test 2.3 Failed: Status', resLogin.status);
