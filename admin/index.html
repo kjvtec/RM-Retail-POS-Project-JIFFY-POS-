@@ -2393,40 +2393,29 @@
         return;
       }
 
-      // ตรวจสอบ Google OAuth Callback จาก Supabase (#access_token=... หรือ ?code=...)
-      if (window.location.hash && window.location.hash.includes('access_token=')) {
+      // Supabase redirects back with the verified OAuth session in the URL fragment.
+      if (window.location.hash) {
         try {
           const hashParams = new URLSearchParams(window.location.hash.substring(1));
+          const oauthError = hashParams.get('error_description') || hashParams.get('error');
+          if (oauthError) throw new Error(oauthError);
           const accessToken = hashParams.get('access_token');
           if (accessToken) {
-            const cfgRes = await fetch('../api.php?action=get_auth_config');
-            const cfg = await cfgRes.json();
-            if (cfg.supabase_url) {
-              const uRes = await fetch(`${cfg.supabase_url}/auth/v1/user`, {
-                headers: {
-                  'Authorization': `Bearer ${accessToken}`,
-                  'apikey': cfg.supabase_anon_key || ''
-                }
-              });
-              if (uRes.ok) {
-                const uData = await uRes.json();
-                await fetch('../api.php?action=google_login', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    email: uData.email,
-                    name: (uData.user_metadata && (uData.user_metadata.full_name || uData.user_metadata.name)) || uData.email,
-                    google_id: uData.id,
-                    avatar_url: uData.user_metadata && uData.user_metadata.avatar_url
-                  })
-                });
-                // ล้าง hash บน URL เพื่อความสะอาด
-                window.history.replaceState(null, null, window.location.pathname);
-              }
+            const loginRes = await fetch('../api.php?action=google_login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ access_token: accessToken })
+            });
+            const loginData = await loginRes.json();
+            if (!loginRes.ok || !loginData.success) {
+              throw new Error(loginData.error || 'Google Login ไม่สำเร็จ');
             }
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
           }
         } catch (oauthErr) {
           console.error('OAuth Callback processing error:', oauthErr);
+          window.location.replace(`login.html?error=${encodeURIComponent(oauthErr.message || 'Google Login ไม่สำเร็จ')}`);
+          return;
         }
       }
 

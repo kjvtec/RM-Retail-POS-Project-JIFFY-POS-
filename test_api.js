@@ -123,6 +123,15 @@ async function runTests() {
       console.error('❌ Test 2.4 Unexpected status:', resAuth.status);
     }
 
+    const spoofedGoogle = await request('/api.php?action=google_login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'admin@example.com', google_id: 'forged-id' })
+    });
+    assert.equal(spoofedGoogle.status, 401);
+    assert.ok(!spoofedGoogle.headers['set-cookie']);
+    console.log('✅ Google login rejects claimed email without a verified Supabase session.');
+
     // Test 2.5: Check Supabase error message when env variables are missing
     const resProjects = await request('/api.php?action=get_projects');
     if (resProjects.status === 500 && resProjects.body.includes('Supabase configuration missing')) {

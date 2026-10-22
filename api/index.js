@@ -138,10 +138,25 @@ module.exports = async function handler(req, res) {
   }
 
   if (action === 'get_auth_config') {
+    let hasGoogle = false;
+    if (SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
+      try {
+        const settingsResponse = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/settings`, {
+          headers: { apikey: process.env.SUPABASE_ANON_KEY },
+          signal: AbortSignal.timeout(4000)
+        });
+        if (settingsResponse.ok) {
+          const settings = await settingsResponse.json();
+          hasGoogle = settings.external?.google === true;
+        }
+      } catch (error) {
+        console.error('Google provider status check failed:', error.message);
+      }
+    }
     return sendJson(res, {
       supabase_url: SUPABASE_URL,
       supabase_anon_key: process.env.SUPABASE_ANON_KEY || '',
-      has_google: true
+      has_google: hasGoogle
     });
   }
 
@@ -592,67 +607,49 @@ module.exports = async function handler(req, res) {
 
     // --- Action: google_login (Supabase Auth / Google OAuth) ---
     if (action === 'google_login') {
+      if (req.method !== 'POST') {
+        return sendJson(res, { error: 'Method not allowed' }, 405);
+      }
       const body = await parseBody(req);
-      const email = (body.email || '').trim().toLowerCase();
-      const name = (body.name || body.display_name || '').trim();
-      const googleId = (body.google_id || body.id || '').trim();
-      const avatarUrl = (body.avatar_url || '').trim();
-
-      if (!email) {
-        return sendJson(res, { error: 'ไม่พบข้อมูลอีเมลจาก Google Account' }, 400);
+      const accessToken = typeof body.access_token === 'string' ? body.access_token.trim() : '';
+      if (!accessToken || !supabase) {
+        return sendJson(res, { error: 'ไม่พบ Google session ที่ตรวจสอบได้' }, 401);
       }
 
-      let user = null;
+      const { data: authData, error: authError } = await supabase.auth.getUser(accessToken);
+      const authUser = authData?.user;
+      const email = String(authUser?.email || '').trim().toLowerCase();
+      const providers = authUser?.app_metadata?.providers || [];
+      const hasGoogleIdentity = authUser?.app_metadata?.provider === 'google' ||
+        providers.includes('google') ||
+        authUser?.identities?.some(identity => identity.provider === 'google');
+      if (authError || !authUser || !email || !hasGoogleIdentity) {
+        return sendJson(res, { error: 'Google session ไม่ถูกต้องหรือหมดอายุ กรุณาเข้าสู่ระบบใหม่' }, 401);
+      }
+
+      const allowedEmails = new Set((process.env.GOOGLE_ADMIN_EMAILS || '')
+        .split(',').map(value => value.trim().toLowerCase()).filter(Boolean));
+      let approvedUser = null;
       if (supabase) {
-        try {
-          // Check if user exists by email or google_id
-          const { data: existingUser } = await supabase
-            .from('users')
-            .select('*')
-            .or(`email.eq.${email},username.eq.${email}`)
-            .maybeSingle();
-          user = existingUser;
-        } catch (e) {}
+        const { data, error } = await supabase.from('users')
+          .select('id, username, display_name, email, avatar_url')
+          .eq('email', email)
+          .maybeSingle();
+        if (!error) approvedUser = data;
+      }
+      if (!allowedEmails.has(email) && !approvedUser) {
+        return sendJson(res, { error: 'Google Account นี้ยังไม่ได้รับสิทธิ์เข้า Admin' }, 403);
       }
 
-      if (!user) {
-        const username = email.split('@')[0];
-        user = {
-          id: Date.now(),
-          username: username,
-          display_name: name || username,
-          email: email,
-          google_id: googleId || null,
-          avatar_url: avatarUrl || null
-        };
-        if (supabase) {
-          try {
-            const { data: newUser } = await supabase
-              .from('users')
-              .insert([{
-                username: user.username,
-                display_name: user.display_name,
-                email: user.email,
-                google_id: user.google_id,
-                avatar_url: user.avatar_url
-              }])
-              .select('*')
-              .single();
-            if (newUser) user = newUser;
-          } catch (createErr) {}
-        }
-      } else if (avatarUrl && !user.avatar_url && supabase) {
-        try {
-          await supabase.from('users').update({ avatar_url: avatarUrl }).eq('id', user.id);
-        } catch (e) {}
-      }
+      const displayName = approvedUser?.display_name || authUser.user_metadata?.full_name ||
+        authUser.user_metadata?.name || email;
 
       const tokenPayload = {
-        id: user.id,
-        username: user.username,
-        display_name: user.display_name,
-        email: user.email || email,
-        avatar_url: user.avatar_url || avatarUrl
+        id: approvedUser?.id || authUser.id,
+        username: approvedUser?.username || email,
+        display_name: displayName,
+        email,
+        avatar_url: approvedUser?.avatar_url || authUser.user_metadata?.avatar_url || null
       };
 
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
@@ -670,8 +667,7 @@ module.exports = async function handler(req, res) {
       return sendJson(res, {
         success: true,
         message: 'เข้าสู่ระบบด้วย Google Account สำเร็จ',
-        user: tokenPayload,
-        token
+        user: tokenPayload
       });
     }
 

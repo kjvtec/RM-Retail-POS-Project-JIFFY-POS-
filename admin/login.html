@@ -286,6 +286,12 @@
         }
         checkExistingAuth();
 
+        const loginError = new URLSearchParams(window.location.search).get('error');
+        if (loginError) {
+            showError(loginError);
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+
         async function handleGoogleSignIn() {
             const btn = document.getElementById('googleLoginBtn');
             const originalHTML = btn.innerHTML;
@@ -294,10 +300,14 @@
 
             try {
                 const res = await fetch('../api.php?action=get_auth_config');
+                if (!res.ok) throw new Error('อ่านการตั้งค่า Google Login ไม่สำเร็จ');
                 const config = await res.json();
                 
                 if (!config.supabase_url) {
                     throw new Error('ยังไม่ได้กำหนด SUPABASE_URL ใน Environment Variables');
+                }
+                if (!config.has_google) {
+                    throw new Error('Google Login ยังไม่เปิดใช้งานใน Supabase โปรดให้ผู้ดูแลตั้งค่า Google provider');
                 }
 
                 // Redirect to Supabase Google OAuth endpoint
