@@ -580,6 +580,57 @@
       vertical-align: middle;
     }
 
+    .summary-table th.col-dates,
+    .summary-table td.col-dates {
+      white-space: nowrap !important;
+      min-width: 200px;
+    }
+    .summary-date-cell {
+      white-space: nowrap !important;
+      cursor: pointer;
+    }
+    .summary-date-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      color: #1e293b;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap !important;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .summary-date-badge:hover {
+      background: #eef2ff;
+      border-color: #818cf8;
+      color: #3730a3;
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(99, 102, 241, 0.18);
+    }
+    .summary-date-text {
+      white-space: nowrap !important;
+      letter-spacing: -0.01em;
+    }
+    .summary-date-badge .edit-hint {
+      display: inline-flex;
+      align-items: center;
+      opacity: 0.6;
+      font-size: 11px;
+      margin-left: 2px;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .summary-date-badge:hover .edit-hint {
+      opacity: 1;
+      transform: scale(1.15);
+      color: #4338ca;
+    }
+
     .summary-table th {
       color: var(--muted);
       background: #f7f9fd;
@@ -2295,7 +2346,7 @@
             <tr>
               <th>State</th>
               <th>ผู้รับผิดชอบ</th>
-              <th>ช่วงเวลา</th>
+              <th class="col-dates" title="ช่วงเวลาดำเนินงาน (คลิกที่ช่วงเวลาเพื่อแก้ไข)">ช่วงเวลา</th>
               <th>สถานะตอนนี้</th>
               <th>ใช้เวลา</th>
               <th>% Work Complete (Actual)</th>
@@ -3271,7 +3322,12 @@
           <td>
             ${stage.assignee ? `<span style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:2px;">${renderAssigneeBadges(stage.assignee, 'stage')}</span>` : '<span style="color:var(--muted); font-size:11px;">ไม่ระบุ</span>'}
           </td>
-          <td>${formatRange(stage)}</td>
+          <td class="col-dates summary-date-cell" onclick="window.location.href='admin/login.html'">
+            <a href="admin/login.html" class="summary-date-badge" title="คลิกเพื่อแก้ไขช่วงเวลา (เข้าสู่ระบบ)">
+              <span class="summary-date-text">${formatRange(stage)}</span>
+              <span class="edit-hint" title="แก้ไข (เข้าสู่ระบบ)">✏️</span>
+            </a>
+          </td>
           <td><span class="summary-state ${state}">${getStateLabel(state)}</span></td>
           <td>${days.toLocaleString("th-TH")} วัน</td>
           <td>
@@ -3319,7 +3375,12 @@
               <td>
                 ${task.assignee ? `<span style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:2px;">${renderAssigneeBadges(task.assignee, 'task')}</span>` : '<span style="color:var(--muted); font-size:10px;">ไม่ระบุ</span>'}
               </td>
-              <td>${formatRange(task)}</td>
+              <td class="col-dates summary-date-cell" onclick="window.location.href='admin/login.html'">
+                <a href="admin/login.html" class="summary-date-badge" title="คลิกเพื่อแก้ไขช่วงเวลา (เข้าสู่ระบบ)">
+                  <span class="summary-date-text">${formatRange(task)}</span>
+                  <span class="edit-hint" title="แก้ไข (เข้าสู่ระบบ)">✏️</span>
+                </a>
+              </td>
               <td><span class="summary-state ${taskState}">${getStateLabel(taskState)}</span></td>
               <td>${taskDays.toLocaleString("th-TH")} วัน</td>
               <td>
