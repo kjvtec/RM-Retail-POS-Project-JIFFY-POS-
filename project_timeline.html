@@ -3519,7 +3519,7 @@
             </div>
           </td>
         `;
-        summaryFrag.appendChild(tr);
+        summaryRows.appendChild(tr);
 
         if (isExpandable) {
           tr.querySelector(".summary-toggle").addEventListener("click", () => {
@@ -3572,7 +3572,7 @@
                 </div>
               </td>
             `;
-            summaryFrag.appendChild(subtaskRow);
+            summaryRows.appendChild(subtaskRow);
           });
         }
       });
