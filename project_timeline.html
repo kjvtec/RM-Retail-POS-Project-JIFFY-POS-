@@ -1819,6 +1819,195 @@
       }
     }
 
+    /* Task Detail Dialog / Modal (Opened upon click) */
+    .task-detail-dialog {
+      border: none;
+      border-radius: 18px;
+      padding: 0;
+      width: min(520px, calc(100% - 32px));
+      background: transparent;
+      box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.45);
+      margin: auto;
+    }
+    .task-detail-dialog::backdrop {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+    .task-detail-card {
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      animation: dialogZoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes dialogZoomIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .task-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .task-detail-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: #5146b6;
+      color: #fff;
+    }
+    .task-detail-close {
+      background: #f1f5f9;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #64748b;
+      transition: all 0.15s;
+    }
+    .task-detail-close:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .task-detail-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.35;
+    }
+    .task-detail-body {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 14px;
+    }
+    .task-detail-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .detail-icon {
+      font-size: 18px;
+      line-height: 1.2;
+      flex: 0 0 24px;
+    }
+    .detail-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .detail-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .detail-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .detail-progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .detail-progress-track {
+      flex: 1;
+      height: 10px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+    .detail-progress-fill {
+      height: 100%;
+      border-radius: inherit;
+      transition: width 0.3s ease;
+    }
+    .detail-pill {
+      display: inline-block;
+      width: fit-content;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .detail-pill.done { background: #dcfce7; color: #166534; }
+    .detail-pill.active { background: #e0f2fe; color: #0369a1; }
+    .detail-pill.stuck { background: #ffe4e6; color: #be123c; }
+    .task-detail-stuck {
+      background: rgba(220, 61, 120, 0.08);
+      border-left: 3px solid #dc3d78;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #9f1239;
+    }
+    .task-detail-remark {
+      background: #f8fafc;
+      border-left: 3px solid #94a3b8;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #334155;
+    }
+    .task-detail-footer {
+      display: flex;
+      justify-content: flex-end;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 14px;
+      margin-top: 4px;
+    }
+    .btn-detail-close {
+      padding: 9px 20px;
+      border-radius: 8px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      font-weight: 700;
+      font-size: 13px;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-detail-close:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .bar {
+      cursor: pointer !important;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .bar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+    }
+    .bar:active {
+      transform: translateY(0);
+    }
+
     /* Custom premium glassmorphic tooltip for Gantt bars */
     .gantt-tooltip {
       position: absolute;
@@ -2085,6 +2274,63 @@
     <div id="highLevelChartScroll" class="highlevel-chart-scroll" aria-label="แผนงานภาพรวมรายเดือน"></div>
   </dialog>
 
+  <!-- Task Detail Modal Dialog (Opened on Gantt Card Click) -->
+  <dialog id="taskDetailDialog" class="task-detail-dialog" aria-labelledby="taskDetailTitle">
+    <div class="task-detail-card">
+      <div class="task-detail-header">
+        <span id="taskDetailBadge" class="task-detail-badge">Task</span>
+        <button id="closeTaskDetail" type="button" class="task-detail-close" aria-label="ปิด">✕</button>
+      </div>
+      <h3 id="taskDetailTitle" class="task-detail-title">-</h3>
+      <div class="task-detail-body">
+        <div class="task-detail-row">
+          <span class="detail-icon">👤</span>
+          <div class="detail-content">
+            <span class="detail-label">ผู้รับผิดชอบ</span>
+            <span id="taskDetailAssignee" class="detail-value">-</span>
+          </div>
+        </div>
+        <div class="task-detail-row">
+          <span class="detail-icon">📅</span>
+          <div class="detail-content">
+            <span class="detail-label">ระยะเวลาดำเนินการ</span>
+            <span id="taskDetailDates" class="detail-value">-</span>
+          </div>
+        </div>
+        <div class="task-detail-row">
+          <span class="detail-icon">📊</span>
+          <div class="detail-content">
+            <span class="detail-label">ความคืบหน้า</span>
+            <div class="detail-progress-wrap">
+              <span id="taskDetailProgress" class="detail-value">0%</span>
+              <div class="detail-progress-track">
+                <div id="taskDetailProgressBar" class="detail-progress-fill" style="width: 0%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="task-detail-row">
+          <span class="detail-icon">📌</span>
+          <div class="detail-content">
+            <span class="detail-label">สถานะงาน</span>
+            <div><span id="taskDetailStatus" class="detail-pill">-</span></div>
+          </div>
+        </div>
+        <div id="taskDetailStuckRow" class="task-detail-stuck" style="display: none;">
+          <strong>⚠️ สาเหตุที่ Stuck / Delay:</strong>
+          <p id="taskDetailStuckReason" style="margin: 4px 0 0; line-height: 1.4;"></p>
+        </div>
+        <div id="taskDetailRemarkRow" class="task-detail-remark" style="display: none;">
+          <strong>📝 หมายเหตุ:</strong>
+          <p id="taskDetailRemark" style="margin: 4px 0 0; line-height: 1.4;"></p>
+        </div>
+      </div>
+      <div class="task-detail-footer">
+        <button id="closeTaskDetailBtn" type="button" class="btn-detail-close">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </dialog>
+
   <script src="workplan_metrics.js"></script>
   <script>
     let stages = [];
@@ -2223,9 +2469,7 @@
 
     function formatPct(val) {
       if (val === null || val === undefined || isNaN(val)) return '0%';
-      const num = Number(val);
-      const str = num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
-      return `${str}%`;
+      return `${Math.round(Number(val))}%`;
     }
     const currentProcessList = document.getElementById("currentProcessList");
     const daysPassed = document.getElementById("daysPassed");
@@ -2488,6 +2732,98 @@
       tooltip.style.top = `${y}px`;
     }
 
+    function openTaskDetail(item, state) {
+      const dialog = document.getElementById("taskDetailDialog");
+      if (!dialog) return;
+
+      const code = getTaskCode(item);
+      const isStage = !item.stage_id;
+      const isStuck = item.color && item.color.toLowerCase() === '#dc3d78';
+      
+      const badge = document.getElementById("taskDetailBadge");
+      const title = document.getElementById("taskDetailTitle");
+      const assignee = document.getElementById("taskDetailAssignee");
+      const dates = document.getElementById("taskDetailDates");
+      const progressText = document.getElementById("taskDetailProgress");
+      const progressBar = document.getElementById("taskDetailProgressBar");
+      const statusPill = document.getElementById("taskDetailStatus");
+      const stuckRow = document.getElementById("taskDetailStuckRow");
+      const stuckReason = document.getElementById("taskDetailStuckReason");
+      const remarkRow = document.getElementById("taskDetailRemarkRow");
+      const remark = document.getElementById("taskDetailRemark");
+
+      if (badge) {
+        badge.textContent = isStage ? 'Milestone' : (item.wbs ? `WBS ${item.wbs}` : 'Task');
+        badge.style.background = item.color || '#5146b6';
+        badge.style.color = getContrastColor(item.color || '#5146b6');
+      }
+
+      if (title) {
+        title.textContent = (code ? `[${code}] ` : '') + item.title;
+      }
+
+      if (assignee) {
+        assignee.textContent = item.assignee ? item.assignee : 'ไม่ระบุผู้รับผิดชอบ';
+      }
+
+      if (dates) {
+        const duration = durationDays(item);
+        dates.textContent = `${formatRange(item)} (${duration} วัน)`;
+      }
+
+      // Progress calculation - integer only
+      let pct = 0;
+      if (item.percent_complete !== undefined && item.percent_complete !== null) {
+        pct = Math.round(Number(item.percent_complete));
+      } else if (item.percent_work_complete !== undefined && item.percent_work_complete !== null) {
+        pct = Math.round(Number(item.percent_work_complete));
+      } else if (item.is_completed) {
+        pct = 100;
+      }
+      pct = Math.min(100, Math.max(0, pct));
+
+      if (progressText) {
+        progressText.textContent = `${pct}%`;
+      }
+      if (progressBar) {
+        progressBar.style.width = `${pct}%`;
+        progressBar.style.background = item.color || '#10b981';
+      }
+
+      if (statusPill) {
+        let statusText = item.status || getStateLabel(state);
+        statusPill.textContent = statusText;
+        statusPill.className = `detail-pill ${state || ''} ${isStuck ? 'stuck' : ''}`;
+      }
+
+      if (stuckRow && stuckReason) {
+        if (isStuck && item.stuck_reason) {
+          stuckReason.textContent = item.stuck_reason;
+          stuckRow.style.display = 'block';
+        } else if (isStuck) {
+          stuckReason.textContent = 'ระบุสถานะเป็น Stuck/Delay';
+          stuckRow.style.display = 'block';
+        } else {
+          stuckRow.style.display = 'none';
+        }
+      }
+
+      if (remarkRow && remark) {
+        if (item.remark && item.remark.trim()) {
+          remark.textContent = item.remark;
+          remarkRow.style.display = 'block';
+        } else {
+          remarkRow.style.display = 'none';
+        }
+      }
+
+      if (typeof dialog.showModal === 'function') {
+        dialog.showModal();
+      } else {
+        dialog.setAttribute('open', '');
+      }
+    }
+
     function hideGanttTooltip() {
       const tooltip = document.getElementById("ganttTooltip");
       if (!tooltip) return;
@@ -2529,15 +2865,17 @@
       
       bar.appendChild(text);
       
-      // Bind hover events for custom tooltip instead of native title
-      bar.addEventListener('mouseenter', (e) => showGanttTooltip(e, item, state));
-      bar.addEventListener('mousemove', (e) => moveGanttTooltip(e));
-      bar.addEventListener('mouseleave', () => hideGanttTooltip());
-      bar.addEventListener('focus', () => {
-        const rect = bar.getBoundingClientRect();
-        showGanttTooltip({ pageX: rect.left + window.scrollX, pageY: rect.bottom + window.scrollY }, item, state);
+      // Click event to show detailed information modal (no hover tooltip)
+      bar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openTaskDetail(item, state);
       });
-      bar.addEventListener('blur', () => hideGanttTooltip());
+      bar.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openTaskDetail(item, state);
+        }
+      });
       
       return bar;
     }
@@ -3463,6 +3801,17 @@
         if (event.target === highLevelDialog) highLevelDialog.close();
       });
       highLevelDialog.addEventListener("close", () => highLevelTrigger.focus());
+
+      const taskDetailDialog = document.getElementById("taskDetailDialog");
+      const closeTaskDetail = document.getElementById("closeTaskDetail");
+      const closeTaskDetailBtn = document.getElementById("closeTaskDetailBtn");
+      if (closeTaskDetail) closeTaskDetail.addEventListener("click", () => taskDetailDialog.close());
+      if (closeTaskDetailBtn) closeTaskDetailBtn.addEventListener("click", () => taskDetailDialog.close());
+      if (taskDetailDialog) {
+        taskDetailDialog.addEventListener("click", event => {
+          if (event.target === taskDetailDialog) taskDetailDialog.close();
+        });
+      }
       highLevelDetails.addEventListener("click", () => {
         const show = highLevelDetails.getAttribute("aria-pressed") !== "true";
         highLevelDetails.setAttribute("aria-pressed", String(show));
