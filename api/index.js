@@ -28,18 +28,32 @@ function loadLocalDataset() {
   return null;
 }
 
+// Singleton Supabase Client & In-Memory Fast Cache
+let _supabaseClient = null;
 function getSupabase() {
   if (!SUPABASE_URL || !SUPABASE_KEY) {
     return null;
   }
-  try {
-    return createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: false }
-    });
-  } catch (e) {
-    console.error('Supabase initialization error:', e.message);
-    return null;
+  if (!_supabaseClient) {
+    try {
+      _supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: false }
+      });
+    } catch (e) {
+      console.error('Supabase initialization error:', e.message);
+      return null;
+    }
   }
+  return _supabaseClient;
+}
+
+let timelineCache = {};
+let cachedColors = null;
+const CACHE_TTL_MS = 20000; // 20 seconds fast server cache
+
+function invalidateCache() {
+  timelineCache = {};
+  cachedColors = null;
 }
 
 function parseCookies(req) {
@@ -329,11 +343,26 @@ module.exports = async function handler(req, res) {
     if (action === 'get_timeline' || action === 'export_timeline_excel') {
       const pidParam = urlObj.searchParams.get('project_id') || (req.query && req.query.project_id);
       const projectId = parseInt(pidParam, 10) || 1;
+      const noCache = urlObj.searchParams.get('nocache') === '1' || req.headers['cache-control'] === 'no-cache';
+
+      // Serve from fast memory cache if fresh
+      if (!noCache && action === 'get_timeline' && timelineCache[projectId] && (Date.now() - timelineCache[projectId].timestamp < CACHE_TTL_MS)) {
+        res.setHeader('Cache-Control', 'public, max-age=5, s-maxage=15, stale-while-revalidate=60');
+        res.setHeader('X-Cache', 'HIT');
+        return sendJson(res, timelineCache[projectId].data);
+      }
+
+      let colorsList = [];
       const sendTimeline = async timeline => {
-        if (action === 'get_timeline') return sendJson(res, timeline);
+        if (action === 'get_timeline') {
+          timelineCache[projectId] = { data: timeline, timestamp: Date.now() };
+          res.setHeader('Cache-Control', 'public, max-age=5, s-maxage=15, stale-while-revalidate=60');
+          res.setHeader('X-Cache', 'MISS');
+          return sendJson(res, timeline);
+        }
         if (!timeline.project) return sendJson(res, { error: 'ไม่พบข้อมูลโครงการสำหรับ Export' }, 404);
         const asOf = urlObj.searchParams.get('as_of') || new Date().toISOString().slice(0, 10);
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf) || Number.isNaN(Date.parse(`${asOf}T00:00:00Z`))) {
+        if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(asOf) || Number.isNaN(Date.parse(`${asOf}T00:00:00Z`))) {
           return sendJson(res, { error: 'วันที่ Export ไม่ถูกต้อง' }, 400);
         }
         const file = await buildWorkplanExcel(timeline, asOf);
@@ -351,25 +380,34 @@ module.exports = async function handler(req, res) {
 
       if (supabase) {
         try {
-          const { data: pData, error: pErr } = await supabase
-            .from('projects')
-            .select('id, name, description, assignee, status, wbs, percent_complete')
-            .eq('id', projectId)
-            .single();
-
-          if (pErr || !pData) {
-            useFallback = true;
-          } else {
-            project = pData;
-            const { data: sData, error: sErr } = await supabase
+          // Parallelize projects, stages, and colors in a single round trip
+          const [pRes, sRes, cRes] = await Promise.all([
+            supabase
+              .from('projects')
+              .select('id, name, description, assignee, status, wbs, percent_complete')
+              .eq('id', projectId)
+              .single(),
+            supabase
               .from('stages')
               .select('id, wbs, title, start_date, end_date, color, sort_order, assignee, duration, weight_pct, percent_complete, percent_work_complete, status, stuck_reason, is_completed')
               .eq('project_id', projectId)
               .order('sort_order', { ascending: true })
-              .order('start_date', { ascending: true });
+              .order('start_date', { ascending: true }),
+            supabase
+              .from('colors')
+              .select('id, name, color_code')
+              .order('id', { ascending: true })
+          ]);
 
-            if (sErr) throw sErr;
-            stages = sData || [];
+          if (pRes.error || !pRes.data) {
+            useFallback = true;
+          } else {
+            project = pRes.data;
+            stages = sRes.data || [];
+            if (!cRes.error && cRes.data) {
+              colorsList = cRes.data;
+              cachedColors = cRes.data;
+            }
 
             const stageIds = stages.map(s => s.id);
             if (stageIds.length > 0) {
@@ -443,7 +481,8 @@ module.exports = async function handler(req, res) {
           return sendTimeline({
             project,
             stages: formattedStages,
-            progress_model: excelProgressModel
+            progress_model: excelProgressModel,
+            colors: colorsList && colorsList.length > 0 ? colorsList : (cachedColors || [])
           });
         }
       }
@@ -499,10 +538,11 @@ module.exports = async function handler(req, res) {
       }));
 
       return sendTimeline({
-        project,
-        stages: formattedStages,
-        progress_model: excelProgressModel
-      });
+            project,
+            stages: formattedStages,
+            progress_model: excelProgressModel,
+            colors: colorsList && colorsList.length > 0 ? colorsList : (cachedColors || [])
+          });
     }
 
     // --- Action: get_assignees ---
@@ -526,6 +566,10 @@ module.exports = async function handler(req, res) {
 
     // --- Action: get_colors ---
     if (action === 'get_colors') {
+      if (cachedColors && cachedColors.length > 0) {
+        res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
+        return sendJson(res, cachedColors);
+      }
       if (supabase) {
         try {
           const { data, error } = await supabase
@@ -534,6 +578,8 @@ module.exports = async function handler(req, res) {
             .order('id', { ascending: true });
 
           if (!error && data && data.length > 0) {
+            cachedColors = data;
+            res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300');
             return sendJson(res, data);
           }
         } catch (e) {}

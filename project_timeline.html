@@ -50,6 +50,20 @@
       margin: 26px auto 40px;
     }
 
+    .page-progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, #6366f1, #3b82f6, #10b981);
+      z-index: 99999;
+      opacity: 0;
+      transition: width 0.25s ease, opacity 0.3s ease;
+      box-shadow: 0 0 10px rgba(99, 102, 241, 0.7);
+      pointer-events: none;
+    }
+
     .topbar {
       display: grid;
       grid-template-columns: minmax(0, 1fr) auto;
@@ -2320,6 +2334,7 @@
   </style>
 </head>
 <body>
+  <div id="pageProgressBar" class="page-progress-bar"></div>
   <!-- Gantt Custom Tooltip Container -->
   <div id="ganttTooltip" class="gantt-tooltip" style="display: none;"></div>
 
@@ -3504,7 +3519,7 @@
             </div>
           </td>
         `;
-        summaryRows.appendChild(tr);
+        summaryFrag.appendChild(tr);
 
         if (isExpandable) {
           tr.querySelector(".summary-toggle").addEventListener("click", () => {
@@ -3557,7 +3572,7 @@
                 </div>
               </td>
             `;
-            summaryRows.appendChild(subtaskRow);
+            summaryFrag.appendChild(subtaskRow);
           });
         }
       });
@@ -3752,52 +3767,81 @@
       return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    // โหลดข้อมูล Timeline ราย Project
+    // โหลดข้อมูลและแสดงผลแถบสี
+    function renderLegendColors(colorsList) {
+      if (!colorsList || !colorsList.length) return;
+      const legendEl = document.querySelector(".type-legend");
+      if (legendEl) {
+        legendEl.innerHTML = colorsList.map(c => `
+          <span class="type-item"><i class="swatch" style="--swatch: ${escapeHTML(c.color_code)}"></i>${escapeHTML(c.name)}</span>
+        `).join('');
+      }
+    }
+
+    const CACHE_KEY = `jffpos_timeline_data_p${projectId}`;
+
+    function renderFromData(data) {
+      if (!data || !data.project || !data.stages) return false;
+      project = data.project;
+      stages = data.stages;
+      progressModel = data.progress_model || null;
+      document.getElementById("projectTitle").textContent = project.name || "Project Timeline";
+      document.getElementById("projectSubtitle").textContent = project.description || "Dynamic Project Timeline Dashboard";
+      document.getElementById("footerText").textContent = `RM-Retail POS Project (JIFFY POS): ${project.name || ''}`;
+      if (data.colors) renderLegendColors(data.colors);
+      initChartDates();
+      renderHeader();
+      renderStatus();
+      return true;
+    }
+
+    // โหลดข้อมูล Timeline ราย Project ด้วยระบบ Cache อัจฉริยะ (Zero-Lag)
     async function loadTimelineData() {
+      const progressBar = document.getElementById("pageProgressBar");
+      if (progressBar) {
+        progressBar.style.opacity = '1';
+        progressBar.style.width = '35%';
+      }
+
       try {
         const response = await fetch(`api.php?action=get_timeline&project_id=${projectId}`);
         if (!response.ok) {
           let errorMsg = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
           try {
             const errData = await response.json();
-            if (errData && errData.error) {
-              errorMsg = errData.error;
-            }
+            if (errData && errData.error) errorMsg = errData.error;
           } catch(e) {}
           throw new Error(errorMsg);
         }
         
-        const resData = await response.json();
-        project = resData.project;
-        stages = resData.stages;
-        progressModel = resData.progress_model || null;
-        errorContainer.innerHTML = '';
-        
-        // อัปเดตหัวเว็บและหัวแผนภูมิ Gantt ให้ตรงกับรายละเอียดโครงการที่เลือก
-        document.getElementById("projectTitle").textContent = project.name;
-        document.getElementById("projectSubtitle").textContent = project.description || "Dynamic Project Timeline Dashboard";
-        document.getElementById("footerText").textContent = `RM-Retail POS Project (JIFFY POS): ${project.name}`;
+        if (progressBar) progressBar.style.width = '75%';
 
-        // โหลดและสร้างป้ายอธิบายสีตามจริง
+        const resData = await response.json();
+        errorContainer.innerHTML = '';
+        renderFromData(resData);
+
+        // บันทึก Cache ลง sessionStorage เพื่อเปิดครั้งต่อไปได้ทันทีโดยไม่ต้องรอ
         try {
-          const colorsRes = await fetch('api.php?action=get_colors');
-          if (colorsRes.ok) {
-            const colorsList = await colorsRes.json();
-            const legendEl = document.querySelector(".type-legend");
-            if (legendEl && colorsList.length > 0) {
-              legendEl.innerHTML = colorsList.map(c => `
-                <span class="type-item"><i class="swatch" style="--swatch: ${escapeHTML(c.color_code)}"></i>${escapeHTML(c.name)}</span>
-              `).join('');
-            }
-          }
-        } catch (e) {
-          console.error("Error loading legend colors:", e);
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(resData));
+        } catch(e) {}
+
+        // ถ้าไม่มีสีในก้อน timeline ให้ fetch เสริมแบบ asynchronous
+        if (!resData.colors || !resData.colors.length) {
+          fetch('api.php?action=get_colors')
+            .then(res => res.json())
+            .then(renderLegendColors)
+            .catch(() => {});
         }
 
-        initChartDates();
-        renderHeader();
-        renderStatus();
+        if (progressBar) {
+          progressBar.style.width = '100%';
+          setTimeout(() => {
+            progressBar.style.opacity = '0';
+            setTimeout(() => { progressBar.style.width = '0%'; }, 300);
+          }, 200);
+        }
       } catch (error) {
+        if (progressBar) progressBar.style.opacity = '0';
         console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล Gantt:", error);
         errorContainer.innerHTML = `
           <div style="background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 600;">
@@ -4139,6 +4183,16 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       dateInput.value = dateValue(new Date());
+
+      // 1. Instant Cache Display (เปิดปุ๊บแสดงผลทันที 0ms ไม่ต้องรอ Network)
+      try {
+        const cachedRaw = sessionStorage.getItem(CACHE_KEY);
+        if (cachedRaw) {
+          renderFromData(JSON.parse(cachedRaw));
+        }
+      } catch (e) {}
+
+      // 2. ดึงข้อมูลสดแบบ Background Update
       loadTimelineData();
       dateInput.addEventListener("change", renderStatus);
 
