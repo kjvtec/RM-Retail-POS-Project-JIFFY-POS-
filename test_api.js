@@ -57,11 +57,18 @@ async function runTests() {
       console.error('❌ Test 2.1 Failed: Status', resHome.status);
     }
 
-    const resDashboard = await request('/index.html');
+    const resDashboard = await request('/dashboard.html');
     if (resDashboard.status === 200 && resDashboard.body.includes('Overall Projects Dashboard')) {
-      console.log('✅ Test 2.1b: Existing dashboard remains available at /index.html.');
+      console.log('✅ Test 2.1b: Existing dashboard remains available at /dashboard.html.');
     } else {
       console.error('❌ Test 2.1b Failed: Status', resDashboard.status);
+    }
+
+    const resIndex = await request('/index.html');
+    if (resIndex.status === 200 && resIndex.body.includes('project_timeline.html?project_id=1')) {
+      console.log('✅ Test 2.1c: Vercel index.html directs visitors to Progress.');
+    } else {
+      console.error('❌ Test 2.1c Failed: Status', resIndex.status);
     }
 
     // Test 2.2: Check static project_timeline.html rewrite

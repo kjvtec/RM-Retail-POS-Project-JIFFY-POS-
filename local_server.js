@@ -64,7 +64,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/') {
     pathname = '/project_timeline.html';
   } else if (pathname === '/index.php') {
-    pathname = '/index.html';
+    pathname = '/dashboard.html';
   } else if (pathname === '/project_timeline.php') {
     pathname = '/project_timeline.html';
   } else if (pathname === '/admin' || pathname === '/admin/' || pathname === '/admin/index.php') {

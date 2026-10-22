@@ -23,7 +23,7 @@
     },
     {
       "source": "/index.php",
-      "destination": "/index.html"
+      "destination": "/dashboard.html"
     },
     {
       "source": "/project_timeline.php",
