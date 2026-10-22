@@ -808,6 +808,87 @@
       overflow: hidden;
     }
 
+    .gantt-zoom-bar {
+      display: inline-flex;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      padding: 3px 5px;
+      gap: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .gantt-zoom-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      background: #ffffff;
+      color: #334155;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 700;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .gantt-zoom-btn:hover {
+      background: #eef2ff;
+      border-color: #a5b4fc;
+      color: #3730a3;
+      transform: translateY(-1px);
+    }
+    .gantt-zoom-btn:active {
+      transform: translateY(0);
+    }
+    .gantt-zoom-level {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 48px;
+      height: 28px;
+      padding: 0 6px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: #1e293b;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .gantt-zoom-level:hover {
+      background: #e2e8f0;
+      color: #4338ca;
+    }
+    .gantt-zoom-fit-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid #4338ca;
+      border-radius: 6px;
+      background: #4338ca;
+      color: #ffffff;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 1px 3px rgba(67, 56, 202, 0.25);
+    }
+    .gantt-zoom-fit-btn:hover {
+      background: #3730a3;
+      border-color: #3730a3;
+      transform: translateY(-1px);
+    }
+    .gantt-zoom-fit-btn:active {
+      transform: translateY(0);
+    }
+
     .timeline-toolbar {
       display: flex;
       justify-content: space-between;
@@ -2380,6 +2461,21 @@
           <p>แต่ละเดือนแบ่งเป็น 4 Week เพื่อให้เห็นตำแหน่งวันที่ปัจจุบันบนแผนงาน</p>
         </div>
         <div class="timeline-actions">
+          <div class="gantt-zoom-bar" role="toolbar" aria-label="Gantt Zoom Controls">
+            <button id="btnZoomOut" type="button" class="gantt-zoom-btn" title="Zoom Out (Ctrl + Scroll Down)" aria-label="Zoom Out">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button id="btnZoomReset" type="button" class="gantt-zoom-level" title="คลิกเพื่อรีเซ็ตขนาดเริ่มต้น (100%)">
+              <span id="zoomPercentText">100%</span>
+            </button>
+            <button id="btnZoomIn" type="button" class="gantt-zoom-btn" title="Zoom In (Ctrl + Scroll Up)" aria-label="Zoom In">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button id="btnZoomFit" type="button" class="gantt-zoom-fit-btn" title="ปรับขนาดพอดีหน้าจอ (Fit to Screen)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+              Fit
+            </button>
+          </div>
           <button id="openHighLevel" class="highlevel-trigger" type="button" aria-haspopup="dialog" aria-controls="highLevelDialog">
             <span aria-hidden="true">▦</span> High Level Project Timeline
           </button>
@@ -3095,6 +3191,75 @@
           laneEnds[lane] = entry.end;
           return { task: entry.task, lane: lane + 2 };
         });
+    }
+
+    // Gantt Chart Zoom Controller
+    let currentGanttZoomPct = 100;
+    const BASE_WEEK_WIDTH = 72;
+    const ZOOM_STEPS = [35, 50, 65, 80, 100, 125, 150, 180, 220, 260];
+
+    function updateTodayLine() {
+      const todayLine = document.querySelector(".today-line");
+      if (!todayLine || !dateInput) return;
+      const current = toDate(dateInput.value);
+      const currentColumn = gridColumnForDate(current);
+      const chartStyle = getComputedStyle(document.documentElement);
+      const weekWidth = parseFloat(chartStyle.getPropertyValue('--week-width'));
+      const labelWidth = parseFloat(chartStyle.getPropertyValue('--label-width'));
+      todayLine.style.setProperty("--today-left", `${labelWidth + ((currentColumn - 1) * weekWidth) + (weekWidth / 2)}px`);
+    }
+
+    function setGanttZoom(pct, explicitPx) {
+      currentGanttZoomPct = Math.max(30, Math.min(300, Math.round(pct)));
+      const weekWidth = explicitPx || Math.round(BASE_WEEK_WIDTH * (currentGanttZoomPct / 100));
+
+      const scrollEl = document.getElementById("timelineScroll");
+      let scrollRatio = 0.5;
+      if (scrollEl && scrollEl.scrollWidth > scrollEl.clientWidth) {
+        scrollRatio = (scrollEl.scrollLeft + scrollEl.clientWidth / 2) / scrollEl.scrollWidth;
+      }
+
+      document.documentElement.style.setProperty('--week-width', `${weekWidth}px`);
+
+      const zoomText = document.getElementById("zoomPercentText");
+      if (zoomText) {
+        zoomText.textContent = `${currentGanttZoomPct}%`;
+      }
+
+      updateTodayLine();
+
+      if (scrollEl && scrollEl.scrollWidth > scrollEl.clientWidth) {
+        requestAnimationFrame(() => {
+          scrollEl.scrollLeft = (scrollRatio * scrollEl.scrollWidth) - (scrollEl.clientWidth / 2);
+        });
+      }
+    }
+
+    function zoomGanttIn() {
+      const next = ZOOM_STEPS.find(s => s > currentGanttZoomPct) || Math.min(300, currentGanttZoomPct + 25);
+      setGanttZoom(next);
+    }
+
+    function zoomGanttOut() {
+      const prev = [...ZOOM_STEPS].reverse().find(s => s < currentGanttZoomPct) || Math.max(30, currentGanttZoomPct - 25);
+      setGanttZoom(prev);
+    }
+
+    function zoomGanttReset() {
+      setGanttZoom(100, BASE_WEEK_WIDTH);
+    }
+
+    function fitGanttToScreen() {
+      const container = document.getElementById("timelineScroll");
+      if (!container) return;
+      const totalWeeks = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--total-weeks')) || 44;
+      const labelWidth = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-width')) || 250;
+      const availableWidth = container.clientWidth - labelWidth - 30;
+      if (availableWidth > 150 && totalWeeks > 0) {
+        const computedWeekWidth = Math.max(24, Math.floor(availableWidth / totalWeeks));
+        const pct = Math.round((computedWeekWidth / BASE_WEEK_WIDTH) * 100);
+        setGanttZoom(pct, computedWeekWidth);
+      }
     }
 
     function renderGantt(current) {
@@ -4022,6 +4187,30 @@
           if (event.target === taskDetailDialog) taskDetailDialog.close();
         });
       }
+      const btnZoomIn = document.getElementById("btnZoomIn");
+      const btnZoomOut = document.getElementById("btnZoomOut");
+      const btnZoomReset = document.getElementById("btnZoomReset");
+      const btnZoomFit = document.getElementById("btnZoomFit");
+
+      if (btnZoomIn) btnZoomIn.addEventListener("click", zoomGanttIn);
+      if (btnZoomOut) btnZoomOut.addEventListener("click", zoomGanttOut);
+      if (btnZoomReset) btnZoomReset.addEventListener("click", zoomGanttReset);
+      if (btnZoomFit) btnZoomFit.addEventListener("click", fitGanttToScreen);
+
+      const scrollContainer = document.getElementById("timelineScroll");
+      if (scrollContainer) {
+        scrollContainer.addEventListener("wheel", (e) => {
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+              zoomGanttIn();
+            } else {
+              zoomGanttOut();
+            }
+          }
+        }, { passive: false });
+      }
+
       highLevelDetails.addEventListener("click", () => {
         const show = highLevelDetails.getAttribute("aria-pressed") !== "true";
         highLevelDetails.setAttribute("aria-pressed", String(show));
