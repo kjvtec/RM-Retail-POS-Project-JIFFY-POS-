@@ -1,5 +1,5 @@
 {
-  "name": "nigiwai-project-management",
+  "name": "jffpos-status",
   "version": "3.0.0",
   "description": "Nigiwai Project Management & Timeline Gantt on Vercel with Supabase",
   "main": "api/index.js",
