@@ -179,13 +179,36 @@
 
     .hero-meter {
       display: grid;
-      gap: 10px;
+      gap: 12px;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       align-items: stretch;
     }
-    .hero-stat { min-width: 0; padding: 14px; border-radius: 12px; background: rgba(255,255,255,.14); }
-    .hero-stat .hero-percent { font-size: clamp(30px, 3.5vw, 52px); margin: 8px 0; }
+    .hero-stat {
+      min-width: 0;
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .14);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hero-stat .hero-percent {
+      font-size: clamp(26px, 3.2vw, 46px);
+      font-weight: 800;
+      line-height: 1;
+      margin: 8px 0;
+    }
     .hero-stat .hero-meta { text-align: left; line-height: 1.35; }
+    .hero-stat-behind .hero-percent, #heroGap {
+      color: #ffd54f !important;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+    .hero-fill-planned {
+      background: linear-gradient(90deg, #38bdf8, #93c5fd) !important;
+    }
+    .hero-fill-actual {
+      background: linear-gradient(90deg, #34d399, #10b981) !important;
+    }
     .export-btn { display: inline-flex; align-items: center; padding: 11px 15px; border-radius: 9px; background: #0f766e; color: #fff; font-weight: 800; text-decoration: none; }
     .export-btn:hover { background: #115e59; }
     .current-list { display: grid; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
@@ -211,11 +234,12 @@
     }
 
     .hero-track {
-      width: min(100%, 240px);
-      height: 12px;
+      width: 100%;
+      height: 8px;
       overflow: hidden;
       border-radius: 999px;
       background: rgba(255, 255, 255, .22);
+      margin-top: 8px;
     }
 
     .hero-fill {
@@ -1879,9 +1903,20 @@
         <ul id="heroBullets" class="hero-bullets"></ul>
       </div>
       <div class="hero-meter">
-        <div class="hero-stat"><div class="hero-label">Baseline Planned</div><div id="heroPlanned" class="hero-percent">0%</div></div>
-        <div class="hero-stat"><div class="hero-label">Actual · Work Complete</div><div id="heroPercent" class="hero-percent">0%</div></div>
-        <div class="hero-stat"><div class="hero-label">Behind Plan</div><div id="heroGap" class="hero-percent">0%</div></div>
+        <div class="hero-stat">
+          <div class="hero-label">Baseline Planned</div>
+          <div id="heroPlanned" class="hero-percent">0%</div>
+          <div class="hero-track"><div id="heroPlannedBar" class="hero-fill hero-fill-planned" style="width: 0%;"></div></div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-label">Actual · Work Complete</div>
+          <div id="heroPercent" class="hero-percent">0%</div>
+          <div class="hero-track"><div id="heroPercentBar" class="hero-fill hero-fill-actual" style="width: 0%;"></div></div>
+        </div>
+        <div class="hero-stat hero-stat-behind">
+          <div class="hero-label">Behind Plan</div>
+          <div id="heroGap" class="hero-percent">0%</div>
+        </div>
       </div>
     </section>
 
@@ -2182,7 +2217,16 @@
     const heroPercent = document.getElementById("heroPercent");
     const heroPlanned = document.getElementById("heroPlanned");
     const heroGap = document.getElementById("heroGap");
+    const heroPlannedBar = document.getElementById("heroPlannedBar");
+    const heroPercentBar = document.getElementById("heroPercentBar");
     const exportExcel = document.getElementById("exportExcel");
+
+    function formatPct(val) {
+      if (val === null || val === undefined || isNaN(val)) return '0%';
+      const num = Number(val);
+      const str = num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
+      return `${str}%`;
+    }
     const currentProcessList = document.getElementById("currentProcessList");
     const daysPassed = document.getElementById("daysPassed");
     const daysPassedNote = document.getElementById("daysPassedNote");
@@ -2607,14 +2651,15 @@
 
       const current = toDate(dateInput.value);
       const metrics = progressModel ? WorkplanMetrics.calculate(stages, progressModel, dateInput.value) : null;
-      const planned = metrics ? Math.floor(metrics.planned) : null;
-      const actual = metrics ? Math.floor(metrics.actual) : null;
-      const gap = metrics ? Math.max(0, planned - actual) : null;
+      const planned = metrics ? formatPct(metrics.planned) : null;
+      const actual = metrics ? formatPct(metrics.actual) : null;
+      const gap = metrics ? formatPct(Math.max(0, metrics.planned - metrics.actual)) : null;
+      const isBehind = metrics && (metrics.planned - metrics.actual) > 0.01;
       const processes = stages.reduce((sum, stage) => sum + (stage.tasks || []).filter(task => Number(task.level) === 2).length, 0);
       metricBox.innerHTML = `
-        <span class="highlevel-metric">Baseline Planned <strong>${planned === null ? '–' : `${planned}%`}</strong></span>
-        <span class="highlevel-metric">Actual <strong>${actual === null ? '–' : `${actual}%`}</strong></span>
-        <span class="highlevel-metric ${gap > 0 ? 'is-late' : ''}">${gap > 0 ? 'Behind Plan' : 'On Plan'} <strong>${gap === null ? '–' : `${gap}%`}</strong></span>
+        <span class="highlevel-metric">Baseline Planned <strong>${planned === null ? '–' : planned}</strong></span>
+        <span class="highlevel-metric">Actual <strong>${actual === null ? '–' : actual}</strong></span>
+        <span class="highlevel-metric ${isBehind ? 'is-late' : ''}">${isBehind ? 'Behind Plan' : 'On Plan'} <strong>${gap === null ? '–' : gap}</strong></span>
         <span class="highlevel-metric">${stages.length} Milestones · ${processes} Processes · ${escapeHTML(formatter.format(current))}</span>
       `;
 
@@ -2898,6 +2943,8 @@
         heroPercent.textContent = "0%";
         heroPlanned.textContent = "0%";
         heroGap.textContent = "0%";
+        if (heroPlannedBar) heroPlannedBar.style.width = "0%";
+        if (heroPercentBar) heroPercentBar.style.width = "0%";
         
         daysPassed.textContent = "-";
         daysPassedNote.textContent = "-";
@@ -2933,15 +2980,26 @@
       const overallProgress = getOverallProgress(current);
       const metrics = progressModel ? WorkplanMetrics.calculate(stages, progressModel, dateInput.value) : null;
 
-      heroTitle.textContent = metrics ? `Actual ${Math.floor(metrics.actual)}% · Baseline ${Math.floor(metrics.planned)}%` : 'กำลังคำนวณข้อมูลโครงการ';
+      const actualPctStr = metrics ? formatPct(metrics.actual) : '0%';
+      const plannedPctStr = metrics ? formatPct(metrics.planned) : '0%';
+      const gapPctStr = metrics ? formatPct(Math.max(0, metrics.planned - metrics.actual)) : '0%';
+
+      heroTitle.textContent = metrics ? `โครงการดำเนินการไปแล้ว (${actualPctStr})` : 'กำลังคำนวณข้อมูลโครงการ';
       heroBullets.innerHTML = `
         <li>กำหนดการภาพรวม: ${formatter.format(overallProgress.start)} ถึง ${formatter.format(overallProgress.end)}</li>
-        <li>อ้างอิงสูตรและลำดับงานจาก Excel · ค่าแสดงผลปัดลงเป็นจำนวนเต็ม</li>
+        <li>เวลาดำเนินงาน: ผ่านไปแล้ว ${overallProgress.completedDays} จากทั้งหมด ${overallProgress.totalDays} วัน</li>
         <li>ข้อมูล ณ วันที่ ${formatter.format(current)}</li>
       `;
-      heroPlanned.textContent = metrics ? `${Math.floor(metrics.planned)}%` : '-';
-      heroPercent.textContent = metrics ? `${Math.floor(metrics.actual)}%` : '-';
-      heroGap.textContent = metrics ? `${Math.max(0, Math.floor(metrics.planned) - Math.floor(metrics.actual))}%` : '-';
+      heroPlanned.textContent = metrics ? plannedPctStr : '-';
+      heroPercent.textContent = metrics ? actualPctStr : '-';
+      heroGap.textContent = metrics ? gapPctStr : '-';
+
+      if (heroPlannedBar) {
+        heroPlannedBar.style.width = metrics ? `${Math.min(100, Math.max(0, metrics.planned)).toFixed(2)}%` : '0%';
+      }
+      if (heroPercentBar) {
+        heroPercentBar.style.width = metrics ? `${Math.min(100, Math.max(0, metrics.actual)).toFixed(2)}%` : '0%';
+      }
       exportExcel.href = `api.php?action=export_timeline_excel&project_id=${projectId}&as_of=${encodeURIComponent(dateInput.value)}`;
       renderSnapshot(current, currentStage, overallProgress, metrics, activeProcesses);
 

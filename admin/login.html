@@ -310,9 +310,14 @@
                     throw new Error('Google Login ยังไม่เปิดใช้งานใน Supabase โปรดให้ผู้ดูแลตั้งค่า Google provider');
                 }
 
-                // Redirect to Supabase Google OAuth endpoint
+                // Let users choose their company account when Google remembers a personal one.
                 const redirectUri = window.location.origin + '/admin/index.html';
-                window.location.href = `${config.supabase_url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUri)}`;
+                const authorizeUrl = new URL('/auth/v1/authorize', config.supabase_url);
+                authorizeUrl.searchParams.set('provider', 'google');
+                authorizeUrl.searchParams.set('redirect_to', redirectUri);
+                authorizeUrl.searchParams.set('prompt', 'select_account');
+                authorizeUrl.searchParams.set('hd', config.google_admin_domain || 'vtec-system.com');
+                window.location.href = authorizeUrl.toString();
             } catch (err) {
                 console.error('Google Auth error:', err);
                 showError('ไม่สามารถเริ่มกระบวนการ Google Login ได้: ' + err.message);

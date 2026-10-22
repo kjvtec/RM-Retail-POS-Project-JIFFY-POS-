@@ -12,6 +12,8 @@ const SUPABASE_URL = process.env.SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
 const JWT_SECRET = process.env.JWT_SECRET || 'jffpos_super_secret_jwt_key_2026';
 const COOKIE_NAME = 'jffpos_admin_token';
+const GOOGLE_ADMIN_DOMAIN = String(process.env.GOOGLE_ADMIN_DOMAIN || 'vtec-system.com')
+  .trim().toLowerCase().replace(/^@/, '');
 
 // Local dataset helper for fallback if Supabase tables are not yet seeded
 function loadLocalDataset() {
@@ -156,6 +158,7 @@ module.exports = async function handler(req, res) {
     return sendJson(res, {
       supabase_url: SUPABASE_URL,
       supabase_anon_key: process.env.SUPABASE_ANON_KEY || '',
+      google_admin_domain: GOOGLE_ADMIN_DOMAIN,
       has_google: hasGoogle
     });
   }
@@ -627,8 +630,10 @@ module.exports = async function handler(req, res) {
         return sendJson(res, { error: 'Google session ไม่ถูกต้องหรือหมดอายุ กรุณาเข้าสู่ระบบใหม่' }, 401);
       }
 
-      const allowedEmails = new Set((process.env.GOOGLE_ADMIN_EMAILS || '')
-        .split(',').map(value => value.trim().toLowerCase()).filter(Boolean));
+      if (!GOOGLE_ADMIN_DOMAIN || email.slice(email.lastIndexOf('@') + 1) !== GOOGLE_ADMIN_DOMAIN) {
+        return sendJson(res, { error: 'Google Account นี้ไม่ได้อยู่ในโดเมนบริษัทที่อนุญาต' }, 403);
+      }
+
       let approvedUser = null;
       if (supabase) {
         const { data, error } = await supabase.from('users')
@@ -637,10 +642,6 @@ module.exports = async function handler(req, res) {
           .maybeSingle();
         if (!error) approvedUser = data;
       }
-      if (!allowedEmails.has(email) && !approvedUser) {
-        return sendJson(res, { error: 'Google Account นี้ยังไม่ได้รับสิทธิ์เข้า Admin' }, 403);
-      }
-
       const displayName = approvedUser?.display_name || authUser.user_metadata?.full_name ||
         authUser.user_metadata?.name || email;
 
