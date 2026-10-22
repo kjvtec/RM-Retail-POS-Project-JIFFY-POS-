@@ -1107,6 +1107,10 @@
         gap: 8px 8px;
       }
     }
+    @media (max-width: 480px) {
+      .hero-meter { grid-template-columns: 1fr; }
+      .hero-stat .hero-percent { font-size: 38px; }
+    }
 
     /* Calendar Card & Grid Styling */
     .calendar-card {
@@ -1517,7 +1521,7 @@
         <p id="daysRemainingNote" class="metric-note">-</p>
       </div>
       <div class="metric-card">
-        <p class="metric-label">Current Task</p>
+        <p class="metric-label">Current Processes</p>
         <p id="currentTaskMetric" class="metric-value">-</p>
         <p id="currentTaskNote" class="metric-note">-</p>
       </div>
@@ -1543,7 +1547,7 @@
         <p id="currentRange" class="stage-range">-</p>
         <div class="progress-wrap">
           <div class="progress-label">
-            <span>Overall This Task Process</span>
+            <span>First Active Milestone Progress</span>
             <span id="currentProgress">0%</span>
           </div>
           <div class="progress-track">
