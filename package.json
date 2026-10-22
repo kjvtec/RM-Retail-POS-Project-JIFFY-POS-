@@ -1,0 +1,26 @@
+{
+  "name": "nigiwai-project-management",
+  "version": "3.0.0",
+  "description": "Nigiwai Project Management & Timeline Gantt on Vercel with Supabase",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node local_server.js",
+    "dev": "node local_server.js",
+    "test": "node test_api.js"
+  },
+  "keywords": [
+    "gantt",
+    "timeline",
+    "supabase",
+    "vercel",
+    "project-management"
+  ],
+  "author": "Nigiwai Group",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "bcryptjs": "^2.4.3",
+    "cookie": "^1.0.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

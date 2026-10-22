@@ -1,0 +1,2805 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nigiwai Project Management - Timeline Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #182033;
+      --muted: #647084;
+      --line: #d8dfec;
+      --panel: #ffffff;
+      --bg: #eef3fb;
+      --done: #26915f;
+      --active: #168bb5;
+      --future: #7b879a;
+      --today: #e11d48;
+      --hero: #5146b6;
+      --purple: #7048c9;
+      --green: #77c56b;
+      --yellow: #ffe86a;
+      --blue: #9fc7ff;
+      --cyan: #9ee7ef;
+      --pink: #ffc8d2;
+      --shadow: 0 16px 42px rgba(31, 45, 70, .12);
+      --week-width: 54px;
+      --label-width: 250px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 18% 0%, rgba(255, 232, 106, .28), transparent 28%),
+        radial-gradient(circle at 84% 8%, rgba(159, 199, 255, .36), transparent 30%),
+        var(--bg);
+      font-family: "Noto Sans Thai", Arial, Tahoma, sans-serif;
+      line-height: 1.45;
+    }
+
+    .shell {
+      width: min(1360px, calc(100% - 32px));
+      margin: 26px auto 40px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: clamp(24px, 2.4vw, 32px);
+      font-weight: 800;
+      letter-spacing: 0;
+      line-height: 1.15;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .controls {
+      display: grid;
+      gap: 7px;
+    }
+
+    .controls label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .controls input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      font: inherit;
+      font-size: 14px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 0 rgba(20, 32, 54, .05);
+    }
+
+    .admin-btn {
+      text-decoration: none;
+      background: var(--hero);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 42px;
+      transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(81, 70, 182, 0.2);
+    }
+
+    .admin-btn:hover {
+      background: #3e32a0;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(81, 70, 182, 0.3);
+    }
+
+    .btn-back {
+      background: var(--muted);
+      box-shadow: 0 4px 12px rgba(100, 112, 132, 0.2);
+    }
+
+    .btn-back:hover {
+      background: #475569;
+      box-shadow: 0 6px 16px rgba(100, 112, 132, 0.3);
+    }
+
+    .status-card {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .project-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 260px;
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 16px;
+      border: 1px solid rgba(216, 223, 236, .95);
+      border-radius: 12px;
+      background:
+        linear-gradient(135deg, rgba(81, 70, 182, .96), rgba(22, 139, 181, .94)),
+        #5146b6;
+      box-shadow: var(--shadow);
+      color: #fff;
+      padding: 22px 24px;
+    }
+
+    .project-hero h2 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 42px);
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    .project-hero p {
+      margin: 8px 0 0;
+      max-width: 760px;
+      color: rgba(255, 255, 255, .82);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .hero-bullets {
+      display: grid;
+      gap: 3px;
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: rgba(255, 255, 255, .86);
+      font-size: 14px;
+      font-weight: 650;
+    }
+
+    .hero-meter {
+      display: grid;
+      gap: 10px;
+      justify-items: end;
+    }
+
+    .hero-percent {
+      font-size: clamp(46px, 6vw, 74px);
+      font-weight: 800;
+      line-height: .95;
+    }
+
+    .hero-label {
+      color: rgba(255, 255, 255, .84);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .hero-track {
+      width: min(100%, 240px);
+      height: 12px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .22);
+    }
+
+    .hero-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #7ce0cc, #ffe86a);
+      transition: width .35s ease;
+    }
+
+    .hero-meta {
+      color: rgba(255, 255, 255, .86);
+      font-size: 12px;
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .dashboard-snapshot {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr)) 1.1fr 1.35fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card,
+    .track-card,
+    .milestone-card,
+    .type-legend {
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(216, 223, 236, .95);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .metric-label,
+    .section-label {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin: 0;
+      color: var(--ink);
+      font-size: 26px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .metric-note {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.3;
+    }
+
+    .track-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: #fff;
+      background: var(--done);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .track-pill.at-risk {
+      background: #dc3d78;
+    }
+
+    .track-pill::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .milestone-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .milestone-list li {
+      display: grid;
+      grid-template-columns: 74px 1fr;
+      gap: 8px;
+      align-items: start;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .milestone-date {
+      color: var(--active);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .stuck-date {
+      color: #dc3d78;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .type-legend {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 8px 12px;
+      margin-bottom: 14px;
+      box-shadow: none;
+    }
+
+    .subtask-pill,
+    .subtask-code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: #fff;
+      background: var(--active);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .subtask-pill {
+      gap: 5px;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    .subtask-code {
+      flex: 0 0 auto;
+      min-width: 30px;
+      padding: 3px 7px;
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .type-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 11.5px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .swatch {
+      flex: 0 0 auto;
+      width: 22px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--swatch);
+      border: 1px solid rgba(24, 32, 51, .12);
+    }
+
+    .status-main,
+    .status-next,
+    .summary-panel,
+    .timeline-card {
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(216, 223, 236, .95);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+    }
+
+    .status-main,
+    .status-next {
+      padding: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .stage-name {
+      max-width: 100%;
+      margin: 0;
+      font-size: clamp(21px, 2vw, 28px);
+      font-weight: 800;
+      letter-spacing: 0;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .stage-range,
+    .next-copy {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .current-state-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      max-width: 100%;
+      margin-top: 12px;
+      border-radius: 999px;
+      padding: 7px 14px;
+      color: #fff;
+      background: var(--active);
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      animation: pulseActive 1.2s ease-in-out infinite;
+    }
+
+    .current-state-pill.done { background: var(--done); }
+    .current-state-pill.future { background: var(--future); animation: none; }
+    .current-state-pill.overdue {
+      background: #ea580c;
+      animation: pulseOverdue 1.1s ease-in-out infinite;
+    }
+
+    .current-state-pill::before {
+      content: "";
+      flex: 0 0 auto;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .progress-wrap {
+      display: grid;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .progress-track,
+    .summary-track {
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e7edf7;
+    }
+
+    .progress-track {
+      height: 12px;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #168bb5, #7ce0cc);
+      transition: width .35s ease;
+    }
+    .progress-fill.overdue {
+      background: linear-gradient(90deg, #ea580c, #f97316);
+    }
+    .progress-fill.done {
+      background: var(--done);
+    }
+
+    .next-name {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      line-height: 1.3;
+      overflow-wrap: anywhere;
+    }
+
+    .summary-panel {
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .summary-heading {
+      display: flex;
+      gap: 12px;
+      align-items: baseline;
+      justify-content: space-between;
+      padding: 15px 18px 11px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .summary-heading h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .summary-heading p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .summary-scroll {
+      overflow-x: auto;
+    }
+
+    .summary-table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+
+    .summary-table th,
+    .summary-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .summary-table th {
+      color: var(--muted);
+      background: #f7f9fd;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .summary-table tr.is-active {
+      background: #eef9ff;
+      box-shadow: inset 5px 0 0 var(--active);
+    }
+
+    .summary-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .summary-title {
+      display: block;
+      max-width: 330px;
+      font-weight: 800;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .summary-state {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 94px;
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: #fff;
+      font-size: 11.5px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .summary-state.done { background: var(--done); }
+    .summary-state.active { background: var(--active); animation: pulseActive 1.2s ease-in-out infinite; }
+    .summary-state.stuck {
+      background: #dc3d78;
+      animation: pulseStuck 1.05s ease-in-out infinite;
+      box-shadow: 0 0 8px rgba(220, 61, 120, 0.6);
+    }
+    .summary-state.future { background: var(--future); }
+    .summary-state.overdue {
+      background: #ea580c;
+      animation: pulseOverdue 1.05s ease-in-out infinite;
+      box-shadow: 0 0 8px rgba(234, 88, 12, 0.6);
+    }
+
+    @keyframes pulseOverdue {
+      0%, 100% { background-color: #ea580c; transform: scale(1); }
+      50% { background-color: #f97316; transform: scale(1.03); }
+    }
+
+    @keyframes pulseStuck {
+      0%, 100% { background-color: #dc3d78; transform: scale(1); }
+      50% { background-color: #f43f5e; transform: scale(1.03); }
+    }
+
+    .summary-progress {
+      display: grid;
+      grid-template-columns: minmax(160px, 1fr) 54px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .summary-action-btn {
+      background: transparent;
+      border: 1px solid var(--active);
+      color: var(--active);
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      line-height: 1;
+    }
+
+    .summary-action-btn:hover {
+      background: var(--active);
+      color: white;
+      box-shadow: 0 3px 8px rgba(22, 139, 181, 0.2);
+    }
+
+    .summary-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      font: inherit;
+      padding: 0;
+      text-align: left;
+    }
+
+    .summary-chevron {
+      flex: 0 0 auto;
+      width: 18px;
+      color: var(--active);
+      font-size: 12px;
+      font-weight: 800;
+      transition: transform .18s ease;
+    }
+
+    .summary-toggle[aria-expanded="true"] .summary-chevron {
+      transform: rotate(90deg);
+    }
+
+    .summary-subtask-row td {
+      background: #fbfdff;
+      border-bottom-color: #e8eef7;
+      font-size: 12px;
+    }
+
+    .summary-subtask-name {
+      padding-left: 34px !important;
+    }
+
+    .summary-subtask-name .subtask-pill {
+      margin-right: 8px;
+    }
+
+    .summary-fill {
+      width: var(--percent, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--future);
+    }
+
+    .summary-fill.done { background: var(--done); }
+    .summary-fill.active { background: var(--active); }
+    .summary-fill.overdue { background: #ea580c; }
+
+    .summary-value {
+      color: var(--muted);
+      font-weight: 800;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 14px;
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .timeline-card {
+      overflow: hidden;
+    }
+
+    .timeline-toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, #fff, #f8fbff);
+    }
+
+    .timeline-toolbar h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .timeline-toolbar p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .today-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      color: #fff;
+      background: var(--today);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 10px 24px rgba(225, 29, 72, .2);
+    }
+
+    .timeline-scroll {
+      overflow-x: auto;
+    }
+
+    .gantt {
+      position: relative;
+      min-width: calc(var(--label-width) + (var(--total-weeks, 44) * var(--week-width)));
+      background: #fff;
+    }
+
+    .gantt-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: var(--label-width) repeat(var(--total-weeks, 44), var(--week-width));
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .corner {
+      grid-row: 1 / span 2;
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      color: #fff;
+      background: linear-gradient(135deg, #5936bb, #168bb5);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .month-cell {
+      padding: 7px 8px;
+      color: #fff;
+      background: #7048c9;
+      border-left: 1px solid rgba(255, 255, 255, .28);
+      text-align: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .month-cell:nth-child(4n + 2) {
+      background: #168bb5;
+    }
+
+    .week-cell {
+      grid-row: 2;
+      padding: 6px 4px;
+      border-left: 1px solid var(--line);
+      background: #f9fbff;
+      color: var(--muted);
+      text-align: center;
+      font-size: 10.5px;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .gantt-body {
+      position: relative;
+    }
+
+    .today-line {
+      position: absolute;
+      z-index: 8;
+      top: 0;
+      bottom: 0;
+      left: var(--today-left, -9999px);
+      width: 0;
+      border-left: 3px solid var(--today);
+      pointer-events: none;
+    }
+
+    .today-line::before {
+      content: attr(data-label);
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      min-width: 96px;
+      border-radius: 999px;
+      padding: 4px 8px;
+      color: #fff;
+      background: var(--today);
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 8px 18px rgba(225, 29, 72, .2);
+      animation: blinkMarker 1s step-end infinite;
+    }
+
+    .gantt-row {
+      display: grid;
+      grid-template-columns: var(--label-width) repeat(var(--total-weeks, 44), var(--week-width));
+      min-height: 62px;
+      border-bottom: 1px solid var(--line);
+      background:
+        linear-gradient(90deg, transparent calc(var(--week-width) - 1px), rgba(216, 223, 236, .9) 0) var(--label-width) 0 / var(--week-width) 100%,
+        linear-gradient(90deg, rgba(112, 72, 201, .055), rgba(22, 139, 181, .035));
+    }
+
+    .gantt-row:nth-child(even) {
+      background:
+        linear-gradient(90deg, transparent calc(var(--week-width) - 1px), rgba(216, 223, 236, .9) 0) var(--label-width) 0 / var(--week-width) 100%,
+        #fbfdff;
+    }
+
+    .row-label {
+      position: sticky;
+      left: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      border-right: 1px solid var(--line);
+      background: rgba(255, 255, 255, .96);
+      padding: 10px 12px;
+      font-size: 12.5px;
+      font-weight: 800;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .row-label.active {
+      color: #0f718f;
+      background: #eef9ff;
+      animation: blinkTaskName 1.05s ease-in-out infinite;
+    }
+
+    .row-label.stuck {
+      color: #991b1b;
+      background: #fef2f2;
+      animation: blinkStuckTaskName 1.05s ease-in-out infinite;
+    }
+    .row-label.overdue {
+      color: #9a3412;
+      background: #fff7ed;
+      animation: blinkOverdueTaskName 1.05s ease-in-out infinite;
+    }
+
+    .bar {
+      grid-row: var(--lane, 1);
+      grid-column: var(--start) / var(--end);
+      align-self: center;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      min-height: 32px;
+      margin: 5px 3px;
+      border-radius: 7px;
+      border: 1px solid rgba(24, 32, 51, .12);
+      color: #142033;
+      background: var(--bar-color, var(--blue));
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.18;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      box-shadow: 0 8px 18px rgba(31, 45, 70, .12);
+    }
+
+    .bar-text {
+      display: -webkit-box;
+      max-width: 100%;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .bar.has-code {
+      gap: 6px;
+    }
+
+    .bar.stage {
+      color: #fff;
+      background: var(--stage-color, var(--purple));
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 10px 22px rgba(112, 72, 201, .22);
+    }
+
+    .bar.active {
+      outline: 3px solid rgba(22, 139, 181, .38);
+      box-shadow: 0 0 0 4px rgba(22, 139, 181, .12), 0 10px 22px rgba(22, 139, 181, .18);
+      animation: pulseBar 1.2s ease-in-out infinite;
+    }
+
+    .bar.done {
+      filter: saturate(.96);
+    }
+
+    .bar.future {
+      opacity: .82;
+    }
+
+    .footer {
+      padding: 12px;
+      color: #fff;
+      background: #07090d;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    @keyframes pulseActive {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(22, 139, 181, .38); }
+      50% { box-shadow: 0 0 0 8px rgba(22, 139, 181, .12); }
+    }
+
+    @keyframes pulseBar {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.12); }
+    }
+
+    @keyframes blinkMarker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .32; }
+    }
+
+    @keyframes blinkTaskName {
+      0%, 100% {
+        color: #0f718f;
+        background: #e9f8ff;
+        box-shadow: inset 5px 0 0 var(--active);
+      }
+      50% {
+        color: #182033;
+        background: #fff;
+        box-shadow: inset 5px 0 0 rgba(22, 139, 181, .22);
+      }
+    }
+
+    @keyframes blinkStuckTaskName {
+      0%, 100% {
+        color: #991b1b;
+        background: #fee2e2;
+        box-shadow: inset 5px 0 0 #dc3d78;
+      }
+      50% {
+        color: #182033;
+        background: #fff;
+        box-shadow: inset 5px 0 0 rgba(220, 61, 120, .22);
+      }
+    }
+    @keyframes blinkOverdueTaskName {
+      0%, 100% {
+        color: #9a3412;
+        background: #ffedd5;
+        box-shadow: inset 5px 0 0 #ea580c;
+      }
+      50% {
+        color: #182033;
+        background: #fff;
+        box-shadow: inset 5px 0 0 rgba(234, 88, 12, .22);
+      }
+    }
+
+    .bar.stuck {
+      animation: pulseBarStuck 1.2s ease-in-out infinite;
+    }
+    .bar.overdue {
+      outline: 3px solid rgba(234, 88, 12, 0.45);
+      box-shadow: 0 0 0 4px rgba(234, 88, 12, .12), 0 10px 22px rgba(234, 88, 12, .18);
+      animation: pulseBarOverdue 1.2s ease-in-out infinite;
+    }
+    @keyframes pulseBarOverdue {
+      0%, 100% { filter: brightness(1) drop-shadow(0 0 2px rgba(234, 88, 12, 0.4)); }
+      50% { filter: brightness(1.15) drop-shadow(0 0 6px rgba(234, 88, 12, 0.7)); }
+    }
+
+    @keyframes pulseBarStuck {
+      0%, 100% { filter: brightness(1) drop-shadow(0 0 2px rgba(220, 61, 120, 0.4)); }
+      50% { filter: brightness(1.2) drop-shadow(0 0 6px rgba(220, 61, 120, 0.7)); }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100% - 20px, 1360px);
+        margin-top: 16px;
+      }
+
+      .topbar,
+      .project-hero,
+      .dashboard-snapshot,
+      .type-legend,
+      .status-card,
+      .summary-heading,
+      .timeline-toolbar {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .topbar {
+        gap: 12px;
+      }
+
+      :root {
+        --label-width: 210px;
+        --week-width: 50px;
+      }
+
+      .project-hero {
+        text-align: center;
+      }
+      .hero-bullets {
+        padding-left: 0;
+        list-style-position: inside;
+        text-align: center;
+      }
+      .hero-meter {
+        justify-items: center;
+      }
+      .hero-meta {
+        text-align: center;
+      }
+      .hero-track {
+        margin: 0 auto;
+      }
+
+      .type-legend {
+        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+        gap: 8px 8px;
+      }
+    }
+
+    /* Calendar Card & Grid Styling */
+    .calendar-card {
+      background: rgba(255, 255, 255, .96);
+      border: 1px solid rgba(216, 223, 236, .95);
+      border-radius: 10px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      margin-top: 24px;
+    }
+
+    .calendar-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(90deg, #fff, #f8fbff);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .calendar-toolbar h2 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .calendar-toolbar p {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .calendar-split-container {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 20px;
+      padding: 16px;
+    }
+
+    @media (max-width: 1024px) {
+      .calendar-split-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .calendar-grid-wrap {
+      min-width: 0;
+    }
+
+    .calendar-side-list {
+      background: rgba(248, 250, 252, 0.95);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 400px;
+    }
+
+    .calendar-side-header h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      border-bottom: 2px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    .calendar-side-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+      max-height: 580px;
+      padding-right: 4px;
+    }
+
+    /* Scrollbar for sidebar */
+    .calendar-side-body::-webkit-scrollbar {
+      width: 4px;
+    }
+    .calendar-side-body::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+
+    .calendar-task-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--border-color, #7048c9);
+      border-radius: 6px;
+      padding: 12px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .calendar-task-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(31, 45, 70, 0.08);
+    }
+
+    .calendar-task-card-stage {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .calendar-task-card-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1.35;
+    }
+
+    .calendar-task-card-meta {
+      font-size: 11.5px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 4px;
+      border-top: 1px dashed #e2e8f0;
+      padding-top: 6px;
+    }
+
+    .calendar-task-card-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 650;
+    }
+
+    .calendar-task-card-status {
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 999px;
+      width: fit-content;
+      text-transform: uppercase;
+    }
+
+    .calendar-task-card-status.done {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .calendar-task-card-status.active {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .calendar-task-card-status.future {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .calendar-more-link {
+      font-size: 9px;
+      font-weight: 800;
+      color: var(--active);
+      text-align: center;
+      padding-top: 2px;
+      cursor: pointer;
+      display: block;
+      text-decoration: underline;
+    }
+    .calendar-more-link:hover {
+      color: #0e7490;
+    }
+
+    .calendar-empty-state {
+      padding: 30px 10px;
+      text-align: center;
+      color: var(--muted);
+      font-weight: 600;
+      font-style: italic;
+      font-size: 13px;
+    }
+
+    .calendar-grid-header {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-weight: 800;
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    .calendar-grid-body {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-auto-rows: minmax(110px, auto);
+      gap: 6px;
+      padding-top: 8px;
+    }
+
+    .calendar-cell {
+      border: 1px solid #f1f5f9;
+      border-radius: 6px;
+      padding: 6px;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .calendar-cell:hover {
+      box-shadow: 0 4px 12px rgba(31, 45, 70, .05);
+      border-color: #cbd5e1;
+    }
+
+    .calendar-cell.muted {
+      background: #f8fafc;
+      color: #94a3b8;
+      opacity: 0.65;
+    }
+
+    .calendar-cell.today {
+      border: 2px solid var(--today);
+      background: #fff8f8;
+    }
+
+    .calendar-cell.selected-day {
+      background: #f0f9ff;
+      border: 2px solid var(--active);
+    }
+
+    .calendar-day-num {
+      font-size: 12px;
+      font-weight: 800;
+      text-align: right;
+      color: #475569;
+    }
+
+    .calendar-cell.muted .calendar-day-num {
+      color: #94a3b8;
+    }
+
+    .calendar-cell.today .calendar-day-num {
+      color: var(--today);
+    }
+
+    .calendar-cell-tasks {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow-y: auto;
+      flex-grow: 1;
+      max-height: 120px;
+    }
+
+    /* Custom scrollbar for calendar task container */
+    .calendar-cell-tasks::-webkit-scrollbar {
+      width: 3px;
+    }
+    .calendar-cell-tasks::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+
+    .calendar-task-badge {
+      font-size: 9.5px;
+      font-weight: 750;
+      padding: 2px 5px;
+      border-radius: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      display: block;
+      transition: transform 0.15s;
+    }
+
+    .calendar-task-badge:hover {
+      transform: translateY(-0.5px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .calendar-task-badge.is-stage {
+      border-left: 3px solid rgba(0, 0, 0, 0.35);
+      font-weight: 800;
+    }
+
+    @media (max-width: 760px) {
+      .calendar-grid-header, .calendar-grid-body {
+        font-size: 10px;
+      }
+      .calendar-grid-body {
+        grid-auto-rows: minmax(70px, auto);
+      }
+      .calendar-task-badge {
+        font-size: 8px;
+        padding: 1px 3px;
+      }
+    }
+
+    /* Custom premium glassmorphic tooltip for Gantt bars */
+    .gantt-tooltip {
+      position: absolute;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #f8fafc;
+      padding: 12px 16px;
+      font-size: 13px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 16px -6px rgba(0, 0, 0, 0.3);
+      max-width: 320px;
+      pointer-events: none;
+      z-index: 1000;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      transform: translateY(10px);
+      opacity: 0;
+      line-height: 1.5;
+    }
+    .gantt-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .gantt-tooltip h4 {
+      font-weight: 800;
+      margin-bottom: 6px;
+      font-size: 14.5px;
+      color: #ffe86a;
+      line-height: 1.3;
+    }
+    .gantt-tooltip .tooltip-meta {
+      font-size: 11.5px;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .gantt-tooltip .tooltip-reason {
+      background: rgba(220, 61, 120, 0.15);
+      border-left: 3px solid #dc3d78;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-weight: 500;
+      color: #ff9fb3;
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.4;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <!-- Gantt Custom Tooltip Container -->
+  <div id="ganttTooltip" class="gantt-tooltip" style="display: none;"></div>
+
+  <main class="shell">
+    <section class="topbar" aria-label="Project heading">
+      <div>
+        <h1 id="projectTitle">Nigiwai Project Management</h1>
+        <p id="projectSubtitle" class="subtitle">Dynamic Project Timeline · Weekly Gantt View</p>
+      </div>
+      <div style="display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap;">
+        <div class="controls">
+          <label for="currentDate">ตรวจสถานะจากวันที่</label>
+          <input id="currentDate" type="date">
+        </div>
+        <a href="index.html" class="admin-btn btn-back">← Dashboard</a>
+        <a href="admin/" class="admin-btn">Admin Dashboard</a>
+      </div>
+    </section>
+
+    <!-- Error Alert Container -->
+    <div id="errorContainer"></div>
+
+    <section class="project-hero" aria-live="polite" aria-label="Overall project progress">
+      <div>
+        <p class="eyebrow">Overall Project Progress</p>
+        <h2 id="heroTitle">Project completion as of today</h2>
+        <ul id="heroBullets" class="hero-bullets"></ul>
+      </div>
+      <div class="hero-meter">
+        <div class="hero-label">Completed</div>
+        <div id="heroPercent" class="hero-percent">0%</div>
+        <div class="hero-track">
+          <div id="heroFill" class="hero-fill"></div>
+        </div>
+        <div id="heroMeta" class="hero-meta">-</div>
+      </div>
+    </section>
+
+    <section class="dashboard-snapshot" aria-label="Dashboard snapshot">
+      <div class="metric-card">
+        <p class="metric-label">Days Passed</p>
+        <p id="daysPassed" class="metric-value">-</p>
+        <p id="daysPassedNote" class="metric-note">-</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label">Days Remaining</p>
+        <p id="daysRemaining" class="metric-value">-</p>
+        <p id="daysRemainingNote" class="metric-note">-</p>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label">Current Task</p>
+        <p id="currentTaskMetric" class="metric-value">-</p>
+        <p id="currentTaskNote" class="metric-note">-</p>
+      </div>
+      <div class="track-card">
+        <p class="section-label">Track Status</p>
+        <div id="trackStatus" class="track-pill">On Track</div>
+        <p id="trackStatusNote" class="metric-note">-</p>
+      </div>
+      <div class="milestone-card">
+        <div style="margin-bottom: 12px;">
+          <p class="section-label">Upcoming Milestones</p>
+          <ul id="milestoneList" class="milestone-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="status-card" aria-live="polite">
+      <div class="status-main">
+        <p class="eyebrow">Current Process</p>
+        <h2 id="currentStage" class="stage-name">-</h2>
+        <div id="currentStatePill" class="current-state-pill">-</div>
+        <p id="currentRange" class="stage-range">-</p>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>Overall This Task Process</span>
+            <span id="currentProgress">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+      <div class="status-next">
+        <p class="eyebrow">Next Milestone</p>
+        <h3 id="nextStage" class="next-name">-</h3>
+        <p id="nextCopy" class="next-copy">-</p>
+        <div style="border-top: 1px dashed var(--line); padding-top: 10px; margin-top: 12px;">
+          <p class="section-label" style="color: #b91c1c; margin-bottom: 8px;">Stuck / Delay Tasks</p>
+          <ul id="stuckTasksList" class="milestone-list"></ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="summary-panel" aria-label="Project state summary">
+      <div class="summary-heading">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <h2>Progress Summary by State</h2>
+          <button id="expandAllBtn" class="summary-action-btn" onclick="toggleExpandAllSummary()">Expand All</button>
+        </div>
+        <p id="overallSummary">-</p>
+      </div>
+      <div class="summary-scroll">
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>State</th>
+              <th>ผู้รับผิดชอบ</th>
+              <th>ช่วงเวลา</th>
+              <th>สถานะตอนนี้</th>
+              <th>ใช้เวลา</th>
+              <th>% ของภาพรวม</th>
+            </tr>
+          </thead>
+          <tbody id="summaryRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="legend">
+      <span style="color: var(--done)"><i class="dot"></i>เสร็จแล้ว</span>
+      <span style="color: var(--active)"><i class="dot"></i>กำลังดำเนินการ</span>
+      <span style="color: var(--future)"><i class="dot"></i>รอดำเนินการ</span>
+      <span style="color: var(--today)"><i class="dot"></i>Today Marker</span>
+    </div>
+
+    <div class="type-legend" aria-label="Task type legend">
+      <span class="type-item"><i class="swatch" style="--swatch: #77c56b"></i>Infra / Kickoff</span>
+      <span class="type-item"><i class="swatch" style="--swatch: #ffe86a"></i>Requirement</span>
+      <span class="type-item"><i class="swatch" style="--swatch: #7048c9"></i>Development</span>
+      <span class="type-item"><i class="swatch" style="--swatch: #9fc7ff"></i>Testing</span>
+      <span class="type-item"><i class="swatch" style="--swatch: #7ce0cc"></i>Training</span>
+      <span class="type-item"><i class="swatch" style="--swatch: #ffc8d2"></i>Go-live</span>
+    </div>
+
+    <section class="timeline-card" aria-label="Project timeline">
+      <div class="timeline-toolbar">
+        <div>
+          <h2>Weekly Gantt Chart</h2>
+          <p>แต่ละเดือนแบ่งเป็น 4 Week เพื่อให้เห็นตำแหน่งวันที่ปัจจุบันบนแผนงาน</p>
+        </div>
+        <div id="todayChip" class="today-chip">Today</div>
+      </div>
+      <div class="timeline-scroll">
+        <div class="gantt">
+          <div id="ganttHeader" class="gantt-header"></div>
+          <div id="ganttBody" class="gantt-body"></div>
+        </div>
+      </div>
+      <div class="footer" id="footerText">Nigiwai Project Management (Mar - Dec 26)</div>
+    </section>
+
+    <!-- Calendar View Card -->
+    <section class="calendar-card" aria-label="Project calendar timeline">
+      <div class="calendar-toolbar">
+        <div>
+          <h2>Monthly Calendar View</h2>
+          <p id="calendarMonthLabel">ปฏิทินแสดงงานประจำเดือน</p>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <button class="summary-action-btn" onclick="prevCalendarMonth()">◀ เดือนก่อนหน้า</button>
+          <button class="summary-action-btn" onclick="setCalendarToSelectedDate()">วันที่เลือก</button>
+          <button class="summary-action-btn" onclick="nextCalendarMonth()">เดือนถัดไป ▶</button>
+        </div>
+      </div>
+      <div class="calendar-split-container">
+        <div class="calendar-grid-wrap">
+          <div class="calendar-grid-header">
+            <div>อาทิตย์</div>
+            <div>จันทร์</div>
+            <div>อังคาร</div>
+            <div>พุธ</div>
+            <div>พฤหัสบดี</div>
+            <div>ศุกร์</div>
+            <div>เสาร์</div>
+          </div>
+          <div id="calendarGridBody" class="calendar-grid-body">
+            <!-- Days will be loaded dynamically -->
+          </div>
+        </div>
+        <div class="calendar-side-list">
+          <div class="calendar-side-header">
+            <h3 id="sideListDateLabel">รายการงานประจำวัน</h3>
+          </div>
+          <div id="sideListBody" class="calendar-side-body">
+            <!-- Details will be loaded dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    let stages = [];
+    let project = {};
+
+    // ดึงค่า project_id จาก URL query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = parseInt(urlParams.get('project_id')) || 1;
+
+    let months = [];
+    let chartStart = new Date();
+    let chartEnd = new Date();
+    let calendarYear = new Date().getFullYear();
+    let calendarMonth = new Date().getMonth();
+
+    function initChartDates() {
+      if (!stages || stages.length === 0) {
+        const currentYear = new Date().getFullYear();
+        chartStart = new Date(currentYear, 0, 1);
+        chartEnd = new Date(currentYear, 11, 31);
+        months = [];
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        for (let i = 0; i < 12; i++) {
+          months.push({ label: monthNames[i], year: currentYear, month: i });
+        }
+        document.documentElement.style.setProperty('--total-weeks', 48);
+        return;
+      }
+
+      let minMs = Infinity;
+      let maxMs = -Infinity;
+      stages.forEach(stage => {
+        const startMs = toDate(stage.start).getTime();
+        const endMs = toDate(stage.end).getTime();
+        if (startMs < minMs) minMs = startMs;
+        if (endMs > maxMs) maxMs = endMs;
+
+        if (stage.tasks && stage.tasks.length > 0) {
+          stage.tasks.forEach(task => {
+            const tStart = toDate(task.start).getTime();
+            const tEnd = toDate(task.end).getTime();
+            if (tStart < minMs) minMs = tStart;
+            if (tEnd > maxMs) maxMs = tEnd;
+          });
+        }
+      });
+
+      const startDate = new Date(minMs);
+      const endDate = new Date(maxMs);
+
+      const startYear = startDate.getFullYear();
+      const startMonth = startDate.getMonth();
+
+      const endYear = endDate.getFullYear();
+      const endMonth = endDate.getMonth();
+
+      months = [];
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      
+      let currYear = startYear;
+      let currMonth = startMonth;
+
+      while (currYear < endYear || (currYear === endYear && currMonth <= endMonth)) {
+        months.push({
+          label: `${monthNames[currMonth]} '${String(currYear).slice(-2)}`,
+          year: currYear,
+          month: currMonth
+        });
+        currMonth++;
+        if (currMonth > 11) {
+          currMonth = 0;
+          currYear++;
+        }
+      }
+
+      if (months.length < 3) {
+        let padStartMonth = startMonth - 1;
+        let padStartYear = startYear;
+        if (padStartMonth < 0) {
+          padStartMonth = 11;
+          padStartYear--;
+        }
+        
+        let padEndMonth = endMonth + 1;
+        let padEndYear = endYear;
+        if (padEndMonth > 11) {
+          padEndMonth = 0;
+          padEndYear++;
+        }
+
+        months = [];
+        let currYear = padStartYear;
+        let currMonth = padStartMonth;
+        
+        while (currYear < padEndYear || (currYear === padEndYear && currMonth <= padEndMonth)) {
+          months.push({
+            label: `${monthNames[currMonth]} '${String(currYear).slice(-2)}`,
+            year: currYear,
+            month: currMonth
+          });
+          currMonth++;
+          if (currMonth > 11) {
+            currMonth = 0;
+            currYear++;
+          }
+        }
+        
+        chartStart = new Date(padStartYear, padStartMonth, 1);
+        chartEnd = new Date(padEndYear, padEndMonth + 1, 0);
+      } else {
+        chartStart = new Date(startYear, startMonth, 1);
+        chartEnd = new Date(endYear, endMonth + 1, 0);
+      }
+
+      const totalWeeks = months.length * 4;
+      document.documentElement.style.setProperty('--total-weeks', totalWeeks);
+    }
+    const weekWidth = 54;
+    const labelWidth = 250;
+    const oneDay = 24 * 60 * 60 * 1000;
+    
+    const dateInput = document.getElementById("currentDate");
+    const summaryRows = document.getElementById("summaryRows");
+    const overallSummary = document.getElementById("overallSummary");
+    const ganttHeader = document.getElementById("ganttHeader");
+    const ganttBody = document.getElementById("ganttBody");
+    const todayChip = document.getElementById("todayChip");
+    const heroTitle = document.getElementById("heroTitle");
+    const heroBullets = document.getElementById("heroBullets");
+    const heroPercent = document.getElementById("heroPercent");
+    const heroFill = document.getElementById("heroFill");
+    const heroMeta = document.getElementById("heroMeta");
+    const daysPassed = document.getElementById("daysPassed");
+    const daysPassedNote = document.getElementById("daysPassedNote");
+    const daysRemaining = document.getElementById("daysRemaining");
+    const daysRemainingNote = document.getElementById("daysRemainingNote");
+    const currentTaskMetric = document.getElementById("currentTaskMetric");
+    const currentTaskNote = document.getElementById("currentTaskNote");
+    const trackStatus = document.getElementById("trackStatus");
+    const trackStatusNote = document.getElementById("trackStatusNote");
+    const milestoneList = document.getElementById("milestoneList");
+    const stuckTasksList = document.getElementById("stuckTasksList");
+    const errorContainer = document.getElementById("errorContainer");
+    const expandedSummaryStages = new Set();
+
+    const formatter = new Intl.DateTimeFormat("th-TH", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+
+    const shortFormatter = new Intl.DateTimeFormat("th-TH", {
+      day: "numeric",
+      month: "short"
+    });
+
+    function toDate(value) {
+      return new Date(`${value}T00:00:00`);
+    }
+
+    function dateValue(date) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
+
+    function clampDate(date, min, max) {
+      if (date < min) return min;
+      if (date > max) return max;
+      return date;
+    }
+
+    function formatRange(item) {
+      return `${formatter.format(toDate(item.start))} - ${formatter.format(toDate(item.end))}`;
+    }
+
+    function getTaskCode(task) {
+      if (task.wbs) return task.wbs;
+      if (task.code) return task.code;
+      const match = task.title.match(/\b(S\d{2})\b/i);
+      return match ? match[1].toUpperCase() : "";
+    }
+
+    function durationDays(item) {
+      return Math.round((toDate(item.end) - toDate(item.start)) / oneDay) + 1;
+    }
+
+    function getOverallRange() {
+      if (stages.length === 0) {
+        return { start: chartStart, end: chartEnd };
+      }
+      const starts = stages.map(stage => toDate(stage.start).getTime());
+      const ends = stages.map(stage => toDate(stage.end).getTime());
+      return {
+        start: new Date(Math.min(...starts)),
+        end: new Date(Math.max(...ends))
+      };
+    }
+
+    function getState(item, current) {
+      const isCompleted = parseInt(item.is_completed) === 1;
+      if (isCompleted) {
+        return "done";
+      }
+      // If it is explicitly marked as "At Risk" (has red color #dc3d78), it is "stuck" (delayed)
+      if (item.color && item.color.toLowerCase() === '#dc3d78') {
+        return "stuck";
+      }
+      const start = toDate(item.start);
+      const end = toDate(item.end);
+      if (current > end) {
+        return "overdue";
+      }
+      if (current < start) return "future";
+      return "active";
+    }
+
+    function getStateLabel(state) {
+      return {
+        done: "เสร็จแล้ว",
+        active: "กำลังดำเนินการ",
+        future: "รอดำเนินการ",
+        stuck: "Stuck/Delay",
+        overdue: "เลยกำหนด (ยังไม่เสร็จ)"
+      }[state] || state;
+    }
+
+    function getProgress(item, current) {
+      if (item.percent_complete !== undefined && item.percent_complete !== null && !isNaN(item.percent_complete)) return Math.round(parseFloat(item.percent_complete));
+      const isCompleted = parseInt(item.is_completed) === 1;
+      if (isCompleted) return 100;
+
+      // If it's a stage with tasks, calculate the progress based on its tasks ratio
+      if (item.tasks && item.tasks.length > 0) {
+        const completedTasksCount = item.tasks.filter(t => parseInt(t.is_completed) === 1).length;
+        return Math.round((completedTasksCount / item.tasks.length) * 100);
+      }
+
+      const start = toDate(item.start);
+      const end = toDate(item.end);
+      if (current < start) return 0;
+
+      const total = Math.max(oneDay, end - start + oneDay);
+      const elapsed = current - start + oneDay;
+      const calculated = Math.min(100, Math.max(0, Math.round((elapsed / total) * 100)));
+      
+      // If not completed, cap it at 99% so it only becomes 100% when marked completed
+      return Math.min(99, calculated);
+    }
+
+    function getOverallProgress(current) {
+      const overall = getOverallRange();
+      const totalDays = Math.round((overall.end - overall.start) / oneDay) + 1;
+      let completedDays = 0;
+
+      if (current >= overall.start) {
+        const clampedCurrent = clampDate(current, overall.start, overall.end);
+        completedDays = Math.round((clampedCurrent - overall.start) / oneDay) + 1;
+      }
+
+      const percent = Math.min(100, Math.max(0, (completedDays / totalDays) * 100));
+      return { ...overall, totalDays, completedDays, percent };
+    }
+
+    function findCurrentStage(current) {
+      const active = stages.find(stage => getState(stage, current) === "active");
+      if (active) return active;
+      const upcoming = stages.find(stage => getState(stage, current) === "future");
+      return upcoming || stages[stages.length - 1];
+    }
+
+    // ฟิลเตอร์หา Milestone ถัดไป
+    function findNextStage(current, currentStage) {
+      return stages.find(stage => toDate(stage.start) > current && stage !== currentStage);
+    }
+
+    function findUpcomingMilestones(current, limit = 2) {
+      return stages
+        .flatMap(stage => [
+          { title: `${stage.title} starts`, date: toDate(stage.start) },
+          ...(stage.tasks || []).map(task => ({ title: task.title, date: toDate(task.start) }))
+        ])
+        .filter(item => item.date >= current)
+        .sort((a, b) => a.date - b.date)
+        .filter((item, index, list) => {
+          const key = `${dateValue(item.date)}-${item.title}`;
+          return list.findIndex(candidate => `${dateValue(candidate.date)}-${candidate.title}` === key) === index;
+        })
+        .slice(0, limit);
+    }
+
+    function getTrackStatus(overallProgress, currentStage, current) {
+      const currentProgress = getProgress(currentStage, current);
+      const remainingDays = Math.max(0, overallProgress.totalDays - overallProgress.completedDays);
+      const isAtRisk = remainingDays <= 45 && overallProgress.percent < 90;
+      return {
+        label: isAtRisk ? "At Risk" : "On Track",
+        note: isAtRisk
+          ? "ใกล้วันสิ้นสุดโครงการ ควรตรวจ dependency และ milestone ถัดไป"
+          : `Current task progress ${currentProgress}% และ timeline ยังอยู่ในช่วงที่กำหนด`,
+        atRisk: isAtRisk
+      };
+    }
+
+    function weekOfMonth(date) {
+      if (date.getDate() <= 7) return 1;
+      if (date.getDate() <= 14) return 2;
+      if (date.getDate() <= 21) return 3;
+      return 4;
+    }
+
+    function gridColumnForDate(date, isEnd = false) {
+      const clamped = clampDate(date, chartStart, chartEnd);
+      const monthIndex = months.findIndex(item => item.month === clamped.getMonth() && item.year === clamped.getFullYear());
+      if (monthIndex < 0) return isEnd ? (months.length * 4 + 1) : 1;
+      const weekIndex = weekOfMonth(clamped) - 1;
+      return monthIndex * 4 + weekIndex + 1 + (isEnd ? 1 : 0);
+    }
+
+    function visibleOnChart(item) {
+      const start = toDate(item.start);
+      const end = toDate(item.end);
+      return end >= chartStart && start <= chartEnd;
+    }
+
+    function renderHeader() {
+      ganttHeader.innerHTML = '<div class="corner">Process / Weekly Timeline</div>';
+      months.forEach((month, index) => {
+        const monthCell = document.createElement("div");
+        monthCell.className = "month-cell";
+        monthCell.style.gridColumn = `${index * 4 + 2} / span 4`;
+        monthCell.textContent = month.label;
+        ganttHeader.appendChild(monthCell);
+      });
+
+      months.forEach((month, monthIndex) => {
+        for (let week = 1; week <= 4; week += 1) {
+          const weekCell = document.createElement("div");
+          weekCell.className = "week-cell";
+          weekCell.style.gridColumn = `${monthIndex * 4 + week + 1}`;
+          weekCell.textContent = `W${week}`;
+          ganttHeader.appendChild(weekCell);
+        }
+      });
+    }
+
+    function showGanttTooltip(e, item, state) {
+      const tooltip = document.getElementById("ganttTooltip");
+      if (!tooltip) return;
+
+      const isStuck = item.color && item.color.toLowerCase() === '#dc3d78';
+      let html = `<h4>${escapeHTML(item.title)}</h4>`;
+      html += `<div class="tooltip-meta">👤 ผู้รับผิดชอบ: ${escapeHTML(item.assignee || 'ไม่ระบุ')}</div>`;
+      html += `<div class="tooltip-meta">📅 ระยะเวลา: ${formatRange(item)} (${durationDays(item)} วัน)</div>`;
+      
+      if (isStuck && item.stuck_reason) {
+        html += `<div class="tooltip-reason"><strong>⚠️ สาเหตุที่ Stuck/Delay:</strong><br>${escapeHTML(item.stuck_reason)}</div>`;
+      } else if (isStuck) {
+        html += `<div class="tooltip-reason"><strong>⚠️ สถานะ:</strong> Stuck/Delay (ไม่ได้ระบุสาเหตุ)</div>`;
+      }
+      
+      tooltip.innerHTML = html;
+      tooltip.style.display = "block";
+      tooltip.offsetHeight; // Force reflow
+      tooltip.classList.add("visible");
+      
+      moveGanttTooltip(e);
+    }
+
+    function moveGanttTooltip(e) {
+      const tooltip = document.getElementById("ganttTooltip");
+      if (!tooltip) return;
+
+      const offset = 15;
+      let x = e.pageX + offset;
+      let y = e.pageY + offset;
+
+      const tooltipWidth = tooltip.offsetWidth;
+      const tooltipHeight = tooltip.offsetHeight;
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+
+      // Adjust positioning if it goes off screen boundary
+      if (x + tooltipWidth > windowWidth + window.pageXOffset) {
+        x = e.pageX - tooltipWidth - offset;
+      }
+      if (y + tooltipHeight > windowHeight + window.pageYOffset) {
+        y = e.pageY - tooltipHeight - offset;
+      }
+
+      tooltip.style.left = `${x}px`;
+      tooltip.style.top = `${y}px`;
+    }
+
+    function hideGanttTooltip() {
+      const tooltip = document.getElementById("ganttTooltip");
+      if (!tooltip) return;
+
+      tooltip.classList.remove("visible");
+      // Let transition finish before hiding display
+      setTimeout(() => {
+        if (!tooltip.classList.contains("visible")) {
+          tooltip.style.display = "none";
+        }
+      }, 150);
+    }
+
+    function createBar(item, state, className = "") {
+      const startColumn = gridColumnForDate(toDate(item.start));
+      const endColumn = Math.max(startColumn + 1, gridColumnForDate(toDate(item.end), true));
+      const bar = document.createElement("div");
+      bar.className = `bar ${className} ${state}`;
+      bar.style.gridColumn = `${startColumn + 1} / ${endColumn + 1}`;
+      bar.style.setProperty("--lane", item.lane || 1);
+      bar.style.setProperty("--bar-color", item.color);
+      bar.style.setProperty("--stage-color", item.color);
+      const code = getTaskCode(item);
+      if (code) {
+        bar.classList.add("has-code");
+        const codeEl = document.createElement("span");
+        codeEl.className = "subtask-code";
+        codeEl.textContent = code;
+        bar.appendChild(codeEl);
+      }
+      const text = document.createElement("span");
+      text.className = "bar-text";
+      const displayTitle = code ? item.title.replace(new RegExp(`^${code}[-\\s]*`, "i"), "") : item.title;
+      text.textContent = displayTitle;
+      
+      bar.appendChild(text);
+      
+      // Bind hover events for custom tooltip instead of native title
+      bar.addEventListener('mouseenter', (e) => showGanttTooltip(e, item, state));
+      bar.addEventListener('mousemove', (e) => moveGanttTooltip(e));
+      bar.addEventListener('mouseleave', () => hideGanttTooltip());
+      
+      return bar;
+    }
+
+    function renderGantt(current) {
+      ganttBody.innerHTML = "";
+
+      if (stages.length === 0) {
+        const noDataRow = document.createElement("div");
+        noDataRow.style.padding = "20px";
+        noDataRow.style.textAlign = "center";
+        noDataRow.style.color = "var(--muted)";
+        noDataRow.style.fontWeight = "bold";
+        noDataRow.textContent = "ไม่มีข้อมูลแผนงานโครงการที่จะแสดงในแผนภูมิ Gantt";
+        ganttBody.appendChild(noDataRow);
+        return;
+      }
+
+      const currentColumn = gridColumnForDate(current);
+      const todayLine = document.createElement("div");
+      todayLine.className = "today-line";
+      todayLine.dataset.label = `Today ${shortFormatter.format(current)}`;
+      todayLine.style.setProperty("--today-left", `${labelWidth + ((currentColumn - 1) * weekWidth) + (weekWidth / 2)}px`);
+      ganttBody.appendChild(todayLine);
+
+      stages.forEach(stage => {
+        const row = document.createElement("article");
+        const state = getState(stage, current);
+        const stageTasks = stage.tasks || [];
+        const maxLane = Math.max(2, ...stageTasks.map(task => (task.lane || 1) + 1));
+        row.className = "gantt-row";
+        row.style.gridTemplateRows = `repeat(${maxLane}, minmax(40px, auto))`;
+
+        const label = document.createElement("div");
+        label.className = `row-label ${state}`;
+        label.innerHTML = `
+          <div style="display:flex; flex-direction:column; gap:2px; min-width:0; width:100%;">
+            <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHTML(stage.title)}">${escapeHTML(stage.title)}</span>
+          </div>
+        `;
+        row.appendChild(label);
+
+        if (visibleOnChart(stage)) {
+          const stageBar = createBar(stage, state, "stage");
+          stageBar.style.setProperty("--lane", 1);
+          row.appendChild(stageBar);
+        }
+
+        stageTasks.filter(visibleOnChart).forEach(task => {
+          const taskState = getState(task, current);
+          row.appendChild(createBar({ ...task, lane: (task.lane || 1) + 1 }, taskState));
+        });
+
+        ganttBody.appendChild(row);
+      });
+    }
+
+    function renderSummary(current) {
+      const overall = getOverallRange();
+      const overallDays = Math.round((overall.end - overall.start) / oneDay) + 1;
+      summaryRows.innerHTML = "";
+      overallSummary.textContent = `ภาพรวม ${formatter.format(overall.start)} - ${formatter.format(overall.end)} · ${overallDays} วัน`;
+
+      if (stages.length === 0) {
+        summaryRows.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center; padding: 20px; color: var(--muted); font-weight:bold;">
+              ไม่มีข้อมูลสรุปแผนงาน
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      stages.forEach(stage => {
+        const state = getState(stage, current);
+        const days = durationDays(stage);
+        const percent = (days / overallDays) * 100;
+        const stageTasks = stage.tasks || [];
+        const subtasks = stageTasks;
+        const isExpandable = subtasks.length > 0;
+        const isExpanded = expandedSummaryStages.has(stage.title);
+        const tr = document.createElement("tr");
+        tr.className = state === "active" ? "is-active" : "";
+        tr.innerHTML = `
+          <td>
+            <button class="summary-toggle" type="button" aria-expanded="${isExpanded}" ${isExpandable ? "" : "disabled"}>
+              <span class="summary-chevron">${isExpandable ? "›" : ""}</span>
+              <span class="summary-title" style="vertical-align: middle;">${escapeHTML(stage.title)}</span>
+            </button>
+          </td>
+          <td>
+            ${stage.assignee ? `<span style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:2px;">${renderAssigneeBadges(stage.assignee, 'stage')}</span>` : '<span style="color:var(--muted); font-size:11px;">ไม่ระบุ</span>'}
+          </td>
+          <td>${formatRange(stage)}</td>
+          <td><span class="summary-state ${state}">${getStateLabel(state)}</span></td>
+          <td>${days.toLocaleString("th-TH")} วัน</td>
+          <td>
+            <div class="summary-progress">
+              <div class="summary-track">
+                <div class="summary-fill ${state}" style="--percent: ${percent.toFixed(2)}%"></div>
+              </div>
+              <span class="summary-value" style="font-weight: 800; font-size: 15px; color: var(--primary); text-shadow: 0 1px 1px rgba(0,0,0,0.05);">${percent.toFixed(1)}%</span>
+            </div>
+          </td>
+        `;
+        summaryRows.appendChild(tr);
+
+        if (isExpandable) {
+          tr.querySelector(".summary-toggle").addEventListener("click", () => {
+            if (expandedSummaryStages.has(stage.title)) {
+              expandedSummaryStages.delete(stage.title);
+            } else {
+              expandedSummaryStages.add(stage.title);
+            }
+            renderSummary(current);
+          });
+        }
+
+        if (isExpanded) {
+          subtasks.forEach(task => {
+            const code = getTaskCode(task);
+            const label = code ? task.title.replace(new RegExp(`^${code}[-\\s]*`, "i"), "") : task.title;
+            const textColor = task.color === "#ffe86a" || task.color === "#d8c8ff" ? "#182033" : "#fff";
+            const badgeHTML = code ? `<span class="subtask-pill" style="background:${task.color};color:${textColor}">${code}</span>` : '';
+            const taskState = getState(task, current);
+            const taskDays = durationDays(task);
+            const taskProgress = getProgress(task, current);
+            const subtaskRow = document.createElement("tr");
+            subtaskRow.className = "summary-subtask-row";
+            subtaskRow.innerHTML = `
+              <td class="summary-subtask-name" style="padding-left: ${((task.level || 2) - 1) * 16 + 18}px !important;">
+                <div style="display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; vertical-align: middle;">
+                  ${badgeHTML}
+                  <span style="vertical-align: middle;">${escapeHTML(label)}</span>
+                </div>
+              </td>
+              <td>
+                ${task.assignee ? `<span style="display:inline-flex; align-items:center; flex-wrap:wrap; gap:2px;">${renderAssigneeBadges(task.assignee, 'task')}</span>` : '<span style="color:var(--muted); font-size:10px;">ไม่ระบุ</span>'}
+              </td>
+              <td>${formatRange(task)}</td>
+              <td><span class="summary-state ${taskState}">${getStateLabel(taskState)}</span></td>
+              <td>${taskDays.toLocaleString("th-TH")} วัน</td>
+              <td>
+                <div class="summary-progress">
+                  <div class="summary-track">
+                    <div class="summary-fill ${taskState}" style="--percent: ${taskProgress}%"></div>
+                  </div>
+                  <span class="summary-value" style="font-weight: 800; font-size: 15px; color: var(--active); text-shadow: 0 1px 1px rgba(0,0,0,0.05);">${taskProgress}%</span>
+                </div>
+              </td>
+            `;
+            summaryRows.appendChild(subtaskRow);
+          });
+        }
+      });
+
+      // Update Expand/Collapse All button text if it exists
+      const btn = document.getElementById("expandAllBtn");
+      if (btn && stages.length > 0) {
+        const expandableStages = stages.filter(stage => stage.tasks && stage.tasks.length > 0);
+        const allExpanded = expandableStages.length > 0 && expandableStages.every(stage => expandedSummaryStages.has(stage.title));
+        btn.textContent = allExpanded ? "Collapse All" : "Expand All";
+      }
+    }
+
+    function toggleExpandAllSummary() {
+      const current = toDate(dateInput.value);
+      const expandableStages = stages.filter(stage => stage.tasks && stage.tasks.length > 0);
+      const allExpanded = expandableStages.length > 0 && expandableStages.every(stage => expandedSummaryStages.has(stage.title));
+      
+      if (allExpanded) {
+        expandedSummaryStages.clear();
+      } else {
+        expandableStages.forEach(stage => {
+          expandedSummaryStages.add(stage.title);
+        });
+      }
+      renderSummary(current);
+    }
+
+    function renderSnapshot(current, currentStage, overallProgress) {
+      const remaining = Math.max(0, overallProgress.totalDays - overallProgress.completedDays);
+      const currentTaskProgress = getProgress(currentStage, current);
+      const track = getTrackStatus(overallProgress, currentStage, current);
+      const milestones = findUpcomingMilestones(current, 2);
+
+      daysPassed.textContent = overallProgress.completedDays.toLocaleString("th-TH");
+      daysPassedNote.textContent = `จากทั้งหมด ${overallProgress.totalDays.toLocaleString("th-TH")} วัน`;
+      daysRemaining.textContent = remaining.toLocaleString("th-TH");
+      daysRemainingNote.textContent = `ถึง ${formatter.format(overallProgress.end)}`;
+      currentTaskMetric.textContent = `${currentTaskProgress}%`;
+      currentTaskNote.textContent = `${currentStage.title} ${currentStage.assignee ? `[👤 ${currentStage.assignee}]` : ''}`;
+      trackStatus.textContent = track.label;
+      trackStatus.className = `track-pill ${track.atRisk ? "at-risk" : ""}`;
+      trackStatusNote.textContent = track.note;
+      milestoneList.innerHTML = milestones.length > 0 
+        ? milestones.map(item => `
+            <li>
+              <span class="milestone-date">${shortFormatter.format(item.date)}</span>
+              <span>${escapeHTML(item.title)}</span>
+            </li>
+          `).join("")
+        : '<li>ไม่มี Milestone เร็วๆ นี้</li>';
+
+      // Populate stuck/delay tasks
+      const stuckItems = [];
+      stages.forEach(stage => {
+        if (stage.color && stage.color.toLowerCase() === '#dc3d78') {
+          stuckItems.push({
+            type: 'stage',
+            title: stage.title,
+            end: stage.end
+          });
+        }
+        if (stage.tasks && stage.tasks.length > 0) {
+          stage.tasks.forEach(task => {
+            if (task.color && task.color.toLowerCase() === '#dc3d78') {
+              stuckItems.push({
+                type: 'task',
+                title: task.title,
+                end: task.end
+              });
+            }
+          });
+        }
+      });
+
+      if (stuckTasksList) {
+        if (stuckItems.length > 0) {
+          stuckTasksList.innerHTML = stuckItems.map(item => `
+            <li>
+              <span class="stuck-date">${shortFormatter.format(toDate(item.end))}</span>
+              <span>${escapeHTML(item.title)} ${item.type === 'stage' ? '(ขั้นตอนหลัก)' : ''}</span>
+            </li>
+          `).join("");
+        } else {
+          stuckTasksList.innerHTML = '<li>ไม่มีงานที่ Stuck/Delay</li>';
+        }
+      }
+    }
+
+    function renderStatus() {
+      const current = toDate(dateInput.value);
+      const currentStatePill = document.getElementById("currentStatePill");
+
+      if (stages.length === 0) {
+        heroTitle.textContent = "ไม่มีแผนงานโครงการ";
+        heroBullets.innerHTML = "<li>กรุณาตั้งค่าเชื่อมโยงฐานข้อมูล หรือเพิ่มขั้นตอนงานหลักในระบบหลังบ้าน</li>";
+        heroPercent.textContent = "0%";
+        heroFill.style.width = "0%";
+        heroMeta.textContent = "-";
+        
+        daysPassed.textContent = "-";
+        daysPassedNote.textContent = "-";
+        daysRemaining.textContent = "-";
+        daysRemainingNote.textContent = "-";
+        currentTaskMetric.textContent = "-";
+        currentTaskNote.textContent = "ไม่มีงานขณะนี้";
+        
+        trackStatus.textContent = "N/A";
+        trackStatus.className = "track-pill";
+        trackStatusNote.textContent = "ไม่มีข้อมูลประเมิน";
+        milestoneList.innerHTML = "<li>ไม่มีรายการ</li>";
+        if (stuckTasksList) {
+          stuckTasksList.innerHTML = "<li>ไม่มีรายการ</li>";
+        }
+
+        document.getElementById("currentStage").textContent = "-";
+        currentStatePill.className = "current-state-pill future";
+        currentStatePill.textContent = "ไม่มีขั้นตอนหลักที่อยู่ระหว่างดำเนินการ";
+        document.getElementById("currentRange").textContent = "-";
+        document.getElementById("currentProgress").textContent = "0%";
+        document.getElementById("progressFill").style.width = "0%";
+        document.getElementById("progressFill").className = "progress-fill";
+        todayChip.textContent = `Today: ${formatter.format(current)}`;
+
+        document.getElementById("nextStage").textContent = "ไม่มีงานถัดไป";
+        document.getElementById("nextCopy").textContent = "-";
+
+        renderSummary(current);
+        renderGantt(current);
+        return;
+      }
+
+      const currentStage = findCurrentStage(current);
+      const nextStage = findNextStage(current, currentStage);
+      const progress = getProgress(currentStage, current);
+      const overallProgress = getOverallProgress(current);
+      const currentStageState = getState(currentStage, current);
+
+      const roundedOverall = Math.round(overallProgress.percent);
+      heroTitle.textContent = `โครงการดำเนินการไปแล้ว ${roundedOverall}%`;
+      heroBullets.innerHTML = `
+        <li>กำหนดการภาพรวม: ${formatter.format(overallProgress.start)} ถึง ${formatter.format(overallProgress.end)}</li>
+        <li>เวลาดำเนินงาน: ผ่านไปแล้ว ${overallProgress.completedDays.toLocaleString("th-TH")} จากทั้งหมด ${overallProgress.totalDays.toLocaleString("th-TH")} วัน</li>
+        <li>สถานะปัจจุบัน: อยู่ใน ${currentStage.title} ${currentStage.assignee ? `(ผู้รับผิดชอบหลัก: ${currentStage.assignee})` : ''}</li>
+      `;
+      heroPercent.textContent = `${overallProgress.percent.toFixed(1)}%`;
+      heroFill.style.width = `${overallProgress.percent}%`;
+      heroMeta.textContent = `อัปเดต ณ วันที่ ${formatter.format(current)}`;
+      renderSnapshot(current, currentStage, overallProgress);
+
+      document.getElementById("currentStage").innerHTML = `
+        ${escapeHTML(currentStage.title)}
+        ${currentStage.assignee ? `<span style="font-size: 14px; font-weight:600; color:var(--muted); display:block; margin-top:4px;">ผู้รับผิดชอบหลัก: ${renderAssigneeBadges(currentStage.assignee, 'stage')}</span>` : ''}
+      `;
+      currentStatePill.className = `current-state-pill ${currentStageState}`;
+      currentStatePill.textContent = `วันนี้อยู่ในขั้นตอน: ${getStateLabel(currentStageState)}`;
+      document.getElementById("currentRange").textContent = formatRange(currentStage);
+      document.getElementById("currentProgress").textContent = `${progress}%`;
+      const progressFill = document.getElementById("progressFill");
+      progressFill.style.width = `${progress}%`;
+      progressFill.className = `progress-fill ${currentStageState}`;
+      todayChip.textContent = `Today: ${formatter.format(current)} · ${currentStage.title}`;
+
+      if (nextStage) {
+        const days = Math.ceil((toDate(nextStage.start) - current) / oneDay);
+        document.getElementById("nextStage").textContent = nextStage.title;
+        document.getElementById("nextCopy").textContent = `เริ่ม ${formatter.format(toDate(nextStage.start))} (อีก ${days} วัน)`;
+      } else {
+        document.getElementById("nextStage").textContent = "เสร็จสิ้นโครงการ";
+        document.getElementById("nextCopy").textContent = "ไม่มีขั้นตอนถัดไปในระบบจำลองนี้";
+      }
+
+      renderSummary(current);
+      renderGantt(current);
+      
+      // Auto sync calendar month when date input changes
+      const currentYearMonth = toDate(dateInput.value);
+      calendarYear = currentYearMonth.getFullYear();
+      calendarMonth = currentYearMonth.getMonth();
+      renderCalendar();
+      renderSideList(dateInput.value);
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    // โหลดข้อมูล Timeline ราย Project
+    async function loadTimelineData() {
+      try {
+        const response = await fetch(`api.php?action=get_timeline&project_id=${projectId}`);
+        if (!response.ok) {
+          let errorMsg = "ไม่สามารถเชื่อมต่อฐานข้อมูลได้";
+          try {
+            const errData = await response.json();
+            if (errData && errData.error) {
+              errorMsg = errData.error;
+            }
+          } catch(e) {}
+          throw new Error(errorMsg);
+        }
+        
+        const resData = await response.json();
+        project = resData.project;
+        stages = resData.stages;
+        errorContainer.innerHTML = '';
+        
+        // อัปเดตหัวเว็บและหัวแผนภูมิ Gantt ให้ตรงกับรายละเอียดโครงการที่เลือก
+        document.getElementById("projectTitle").textContent = project.name;
+        document.getElementById("projectSubtitle").textContent = project.description || "Dynamic Project Timeline Dashboard";
+        document.getElementById("footerText").textContent = `Nigiwai Project Management: ${project.name}`;
+
+        // โหลดและสร้างป้ายอธิบายสีตามจริง
+        try {
+          const colorsRes = await fetch('api.php?action=get_colors');
+          if (colorsRes.ok) {
+            const colorsList = await colorsRes.json();
+            const legendEl = document.querySelector(".type-legend");
+            if (legendEl && colorsList.length > 0) {
+              legendEl.innerHTML = colorsList.map(c => `
+                <span class="type-item"><i class="swatch" style="--swatch: ${escapeHTML(c.color_code)}"></i>${escapeHTML(c.name)}</span>
+              `).join('');
+            }
+          }
+        } catch (e) {
+          console.error("Error loading legend colors:", e);
+        }
+
+        initChartDates();
+        renderHeader();
+        renderStatus();
+      } catch (error) {
+        console.error("เกิดข้อผิดพลาดในการโหลดข้อมูล Gantt:", error);
+        errorContainer.innerHTML = `
+          <div style="background: #fee2e2; border: 1px solid #ef4444; color: #991b1b; padding: 16px; border-radius: 8px; margin-bottom: 20px; font-weight: 600;">
+            ⚠️ ไม่สามารถเรียกข้อมูลโครงการนี้ได้: <b>${escapeHTML(error.message)}</b><br>
+            <span style="font-size:12px; font-weight: 500; display:block; margin-top:6px;">กรุณาตรวจสอบการเชื่อมต่อ Supabase ใน Environment Variables หรือรัน <b>supabase_schema.sql</b> ใน Supabase</span>
+          </div>
+        `;
+        renderHeader();
+        renderStatus();
+      }
+    }
+
+    function getContrastColor(hex) {
+      if (!hex) return '#182033';
+      hex = hex.replace('#', '');
+      if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+      }
+      if (hex.length !== 6) return '#182033';
+      const r = parseInt(hex.substr(0, 2), 16);
+      const g = parseInt(hex.substr(2, 2), 16);
+      const b = parseInt(hex.substr(4, 2), 16);
+      const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+      return (yiq >= 128) ? '#182033' : '#ffffff';
+    }
+
+    function renderAssigneeBadges(assigneeStr, type = 'task') {
+      if (!assigneeStr || assigneeStr === 'ไม่ระบุ') return '';
+      const list = assigneeStr.split(',').map(s => s.trim()).filter(Boolean);
+      if (list.length === 0) return '';
+      let bg = '#f0fdf4';
+      let color = '#166534';
+      if (type === 'stage') {
+        bg = '#e0f2fe';
+        color = '#0369a1';
+      }
+      return list.map(name => `<span class="lane-badge" style="background:${bg}; color:${color}; font-weight:800; padding:2px 8px; border-radius:4px; font-size:11px; display:inline-flex; align-items:center; margin-right:4px; margin-top:2px;">👤 ${escapeHTML(name)}</span>`).join('');
+    }
+
+    function prevCalendarMonth() {
+      calendarMonth--;
+      if (calendarMonth < 0) {
+        calendarMonth = 11;
+        calendarYear--;
+      }
+      renderCalendar();
+    }
+
+    function nextCalendarMonth() {
+      calendarMonth++;
+      if (calendarMonth > 11) {
+        calendarMonth = 0;
+        calendarYear++;
+      }
+      renderCalendar();
+    }
+
+    function setCalendarToSelectedDate() {
+      const selected = toDate(dateInput.value);
+      calendarYear = selected.getFullYear();
+      calendarMonth = selected.getMonth();
+      renderCalendar();
+    }
+
+    function renderSideList(dateStr) {
+      const sideListBody = document.getElementById("sideListBody");
+      const sideListDateLabel = document.getElementById("sideListDateLabel");
+      if (!sideListBody || !sideListDateLabel) return;
+
+      const dateObj = toDate(dateStr);
+      const formattedDate = formatter.format(dateObj);
+      sideListDateLabel.textContent = `รายการงานประจำวันที่ ${formattedDate}`;
+
+      sideListBody.innerHTML = "";
+
+      let activeItems = [];
+
+      if (stages && stages.length > 0) {
+        stages.forEach(stage => {
+          if (dateStr >= stage.start && dateStr <= stage.end) {
+            activeItems.push({
+              type: 'stage',
+              stageTitle: stage.title,
+              title: '(ขั้นตอนหลัก)',
+              assignee: stage.assignee || 'ไม่ระบุ',
+              start: stage.start,
+              end: stage.end,
+              color: stage.color,
+              state: getState(stage, dateObj)
+            });
+          }
+
+          if (stage.tasks && stage.tasks.length > 0) {
+            stage.tasks.forEach(task => {
+              if (dateStr >= task.start && dateStr <= task.end) {
+                activeItems.push({
+                  type: 'task',
+                  stageTitle: stage.title,
+                  title: task.title,
+                  assignee: task.assignee || 'ไม่ระบุ',
+                  start: task.start,
+                  end: task.end,
+                  color: task.color || stage.color,
+                  state: getState(task, dateObj)
+                });
+              }
+            });
+          }
+        });
+      }
+
+      if (activeItems.length === 0) {
+        sideListBody.innerHTML = `
+          <div class="calendar-empty-state">
+            ไม่มีภารกิจงานในวันนี้
+          </div>
+        `;
+        return;
+      }
+
+      activeItems.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "calendar-task-card";
+        card.style.setProperty("--border-color", item.color);
+
+        const stageEl = document.createElement("div");
+        stageEl.className = "calendar-task-card-stage";
+        stageEl.textContent = item.stageTitle;
+        card.appendChild(stageEl);
+
+        const titleEl = document.createElement("div");
+        titleEl.className = "calendar-task-card-title";
+        titleEl.textContent = item.title;
+        card.appendChild(titleEl);
+
+        const metaEl = document.createElement("div");
+        metaEl.className = "calendar-task-card-meta";
+
+        const assigneeSpan = document.createElement("span");
+        assigneeSpan.style.display = "inline-flex";
+        assigneeSpan.style.alignItems = "center";
+        assigneeSpan.style.flexWrap = "wrap";
+        assigneeSpan.style.gap = "4px";
+        assigneeSpan.innerHTML = `ผู้รับผิดชอบ: ${renderAssigneeBadges(item.assignee, item.type)}`;
+        metaEl.appendChild(assigneeSpan);
+
+        const duration = durationDays(item);
+        const dateSpan = document.createElement("span");
+        dateSpan.textContent = `📅 เริ่ม ${formatter.format(toDate(item.start))} - สิ้นสุด ${formatter.format(toDate(item.end))} (${duration} วัน)`;
+        metaEl.appendChild(dateSpan);
+
+        card.appendChild(metaEl);
+
+        const statusEl = document.createElement("div");
+        statusEl.className = `calendar-task-card-status ${item.state}`;
+        statusEl.textContent = getStateLabel(item.state);
+        card.appendChild(statusEl);
+
+        sideListBody.appendChild(card);
+      });
+    }
+
+    function renderCalendar() {
+      const gridBody = document.getElementById("calendarGridBody");
+      const labelEl = document.getElementById("calendarMonthLabel");
+      if (!gridBody) return;
+
+      const thaiMonths = [
+        "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+        "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+      ];
+      
+      // Update header label
+      labelEl.textContent = `${thaiMonths[calendarMonth]} ${calendarYear + 543}`;
+
+      gridBody.innerHTML = "";
+
+      // 1. Get first day of target month (0 = Sunday, 1 = Monday...)
+      const firstDayDate = new Date(calendarYear, calendarMonth, 1);
+      const firstDayIdx = firstDayDate.getDay(); // 0-6
+
+      // 2. Get last day of target month
+      const lastDayDate = new Date(calendarYear, calendarMonth + 1, 0);
+      const totalDays = lastDayDate.getDate();
+
+      // 3. Get last day of previous month
+      const prevMonthLastDate = new Date(calendarYear, calendarMonth, 0).getDate();
+
+      // We want to fill 42 cells (6 rows * 7 columns)
+      const totalCells = 42;
+
+      // Current active selection date
+      const activeFilterDate = toDate(dateInput.value);
+      const todayDate = new Date();
+
+      for (let i = 0; i < totalCells; i++) {
+        let dayNum;
+        let isMuted = false;
+        let cellYear = calendarYear;
+        let cellMonth = calendarMonth;
+
+        if (i < firstDayIdx) {
+          // Prev month's day
+          dayNum = prevMonthLastDate - firstDayIdx + i + 1;
+          isMuted = true;
+          cellMonth = calendarMonth - 1;
+          if (cellMonth < 0) {
+            cellMonth = 11;
+            cellYear = calendarYear - 1;
+          }
+        } else if (i >= firstDayIdx + totalDays) {
+          // Next month's day
+          dayNum = i - firstDayIdx - totalDays + 1;
+          isMuted = true;
+          cellMonth = calendarMonth + 1;
+          if (cellMonth > 11) {
+            cellMonth = 0;
+            cellYear = calendarYear + 1;
+          }
+        } else {
+          // Target month's day
+          dayNum = i - firstDayIdx + 1;
+        }
+
+        const cellDate = new Date(cellYear, cellMonth, dayNum);
+        const cellDateStr = dateValue(cellDate);
+
+        const cell = document.createElement("div");
+        cell.className = "calendar-cell";
+        if (isMuted) cell.classList.add("muted");
+
+        // Highlights
+        const isToday = cellDate.getDate() === todayDate.getDate() &&
+                        cellDate.getMonth() === todayDate.getMonth() &&
+                        cellDate.getFullYear() === todayDate.getFullYear();
+        if (isToday) cell.classList.add("today");
+
+        const isSelected = cellDate.getDate() === activeFilterDate.getDate() &&
+                           cellDate.getMonth() === activeFilterDate.getMonth() &&
+                           cellDate.getFullYear() === activeFilterDate.getFullYear();
+        if (isSelected) cell.classList.add("selected-day");
+
+        // Day label
+        const dayLabel = document.createElement("div");
+        dayLabel.className = "calendar-day-num";
+        dayLabel.textContent = dayNum;
+        cell.appendChild(dayLabel);
+
+        // Tasks container
+        const tasksContainer = document.createElement("div");
+        tasksContainer.className = "calendar-cell-tasks";
+
+        // Find active stages and tasks for this day
+        const activeBadges = [];
+        if (stages && stages.length > 0) {
+          stages.forEach(stage => {
+            const sStart = stage.start;
+            const sEnd = stage.end;
+            if (cellDateStr >= sStart && cellDateStr <= sEnd) {
+              activeBadges.push({
+                type: 'stage',
+                item: stage,
+                title: stage.title,
+                color: stage.color,
+                assignee: stage.assignee,
+                clickDate: cellDateStr
+              });
+            }
+
+            // Check tasks inside stage
+            if (stage.tasks && stage.tasks.length > 0) {
+              stage.tasks.forEach(task => {
+                const tStart = task.start;
+                const tEnd = task.end;
+                if (cellDateStr >= tStart && cellDateStr <= tEnd) {
+                  activeBadges.push({
+                    type: 'task',
+                    item: task,
+                    title: task.title,
+                    color: task.color || stage.color,
+                    assignee: task.assignee,
+                    clickDate: cellDateStr
+                  });
+                }
+              });
+            }
+          });
+        }
+
+        const maxBadgesToShow = 3;
+        const badgesToShow = activeBadges.slice(0, maxBadgesToShow);
+        const overflowCount = activeBadges.length - maxBadgesToShow;
+
+        badgesToShow.forEach(badge => {
+          const badgeEl = document.createElement("span");
+          if (badge.type === 'stage') {
+            badgeEl.className = "calendar-task-badge is-stage";
+            badgeEl.textContent = badge.title;
+            badgeEl.title = `ขั้นตอนหลัก: ${badge.title} (ผู้รับผิดชอบ: ${badge.assignee || 'ไม่ระบุ'})\nช่วงเวลา: ${formatRange(badge.item)}`;
+          } else {
+            badgeEl.className = "calendar-task-badge";
+            const code = getTaskCode(badge.item);
+            badgeEl.textContent = code ? `[${code}] ${badge.title.replace(new RegExp(`^${code}[-\\s]*`, "i"), "")}` : badge.title;
+            badgeEl.title = `งานย่อย: ${badge.title} (ผู้รับผิดชอบ: ${badge.assignee || 'ไม่ระบุ'})\nช่วงเวลา: ${formatRange(badge.item)}`;
+          }
+          badgeEl.style.backgroundColor = badge.color;
+          badgeEl.style.color = getContrastColor(badge.color);
+          badgeEl.onclick = (e) => {
+            e.stopPropagation();
+            dateInput.value = badge.clickDate;
+            renderStatus();
+          };
+          tasksContainer.appendChild(badgeEl);
+        });
+
+        if (overflowCount > 0) {
+          const moreLink = document.createElement("span");
+          moreLink.className = "calendar-more-link";
+          moreLink.textContent = `+ ${overflowCount} งานเพิ่มเติม...`;
+          moreLink.onclick = (e) => {
+            e.stopPropagation();
+            dateInput.value = cellDateStr;
+            renderStatus();
+          };
+          tasksContainer.appendChild(moreLink);
+        }
+
+        cell.appendChild(tasksContainer);
+
+        // Click on cell to set date filter
+        cell.onclick = () => {
+          dateInput.value = cellDateStr;
+          renderStatus();
+        };
+
+        gridBody.appendChild(cell);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      dateInput.value = dateValue(new Date());
+      loadTimelineData();
+      dateInput.addEventListener("change", renderStatus);
+    });
+  </script>
+</body>
+</html>
