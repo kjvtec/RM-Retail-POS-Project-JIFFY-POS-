@@ -791,7 +791,7 @@
 
     .highlevel-trigger:focus-visible,
     .highlevel-close:focus-visible,
-    .highlevel-zoom:focus-visible {
+    .highlevel-detail-toggle:focus-visible {
       outline: 3px solid #208bb9;
       outline-offset: 3px;
     }
@@ -880,17 +880,44 @@
       background: #fff;
     }
 
-    .highlevel-modal-tools span {
-      color: #52617c;
+    .highlevel-metrics {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .highlevel-metric {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 6px 11px;
+      border-radius: 9px;
+      background: #f1f5fb;
+      color: #4c5b73;
       font-size: 12px;
       font-weight: 700;
     }
 
-    .highlevel-zoom {
-      padding: 6px 11px;
+    .highlevel-metric strong {
+      color: #172650;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .highlevel-metric.is-late {
+      background: #fff0f3;
+      color: #a81e43;
+    }
+
+    .highlevel-metric.is-late strong { color: #a81e43; }
+
+    .highlevel-detail-toggle {
+      flex: none;
+      padding: 7px 11px;
       border: 1px solid #ccd5e8;
       border-radius: 8px;
-      background: #f7f9fe;
+      background: #fff;
       color: #243961;
       font: inherit;
       font-size: 12px;
@@ -898,25 +925,193 @@
       cursor: pointer;
     }
 
-    .highlevel-image-scroll {
+    .highlevel-chart-scroll {
       min-height: 0;
       overflow: auto;
-      padding: 16px;
-      background: #e9eef8;
+      background: #f4f7fd;
     }
 
-    .highlevel-image {
-      display: block;
-      width: 100%;
-      height: auto;
-      border: 1px solid #ced7e9;
+    .highlevel-chart {
+      --hl-label-width: 300px;
+      --hl-month-width: 82px;
+      --hl-header-height: 49px;
+      position: relative;
+      min-width: calc(var(--hl-label-width) + var(--hl-months) * var(--hl-month-width));
       background: #fff;
-      box-shadow: 0 8px 30px rgba(28, 45, 83, .1);
     }
 
-    .highlevel-image.is-zoomed {
-      width: 1919px;
-      max-width: none;
+    .highlevel-months,
+    .highlevel-row {
+      display: grid;
+      grid-template-columns: var(--hl-label-width) minmax(0, 1fr);
+    }
+
+    .highlevel-months {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      height: var(--hl-header-height);
+      border-bottom: 1px solid #cdd6e6;
+      background: #edf2fa;
+    }
+
+    .highlevel-months-label {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      padding: 0 15px;
+      background: #26355a;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .highlevel-month-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--hl-months), minmax(0, 1fr));
+    }
+
+    .highlevel-month {
+      display: grid;
+      place-items: center;
+      border-left: 1px solid #cdd6e6;
+      color: #314362;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .highlevel-month:nth-child(even) { background: #e5ecf7; }
+
+    .highlevel-row {
+      height: 46px;
+      border-bottom: 1px solid #e3e9f2;
+    }
+
+    .highlevel-row.is-milestone {
+      height: 58px;
+      background: #f4f7fd;
+    }
+
+    .highlevel-row-label {
+      position: sticky;
+      left: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      padding: 5px 14px;
+      border-right: 1px solid #d7dfeb;
+      background: #fff;
+    }
+
+    .highlevel-row.is-milestone .highlevel-row-label { background: #f4f7fd; }
+    .highlevel-row.is-process .highlevel-row-label { padding-left: 28px; }
+
+    .highlevel-row-label-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #23324e;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .highlevel-row.is-milestone .highlevel-row-label-text {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .highlevel-row-code {
+      display: inline-block;
+      margin-right: 7px;
+      color: #46638e;
+      font-weight: 800;
+    }
+
+    .highlevel-row-track {
+      position: relative;
+      min-width: 0;
+      background-image: linear-gradient(to right, #dce3ee 1px, transparent 1px);
+      background-size: var(--hl-month-width) 100%;
+    }
+
+    .highlevel-row.is-milestone .highlevel-row-track { background-color: #f4f7fd; }
+
+    .highlevel-bar {
+      position: absolute;
+      top: 9px;
+      height: 28px;
+      min-width: 5px;
+      overflow: hidden;
+      border-radius: 7px;
+      background: var(--hl-color, #5077ba);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .09);
+    }
+
+    .highlevel-row.is-milestone .highlevel-bar {
+      top: 11px;
+      height: 36px;
+      border-radius: 9px;
+      box-shadow: 0 4px 12px rgba(36, 52, 85, .16);
+    }
+
+    .highlevel-bar-progress {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: var(--hl-progress, 0%);
+      background: rgba(24, 49, 82, .22);
+      border-right: 2px solid rgba(14, 31, 57, .4);
+    }
+
+    .highlevel-bar-title {
+      position: relative;
+      display: block;
+      overflow: hidden;
+      padding: 5px 9px;
+      color: var(--hl-ink, #fff);
+      font-size: 11px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .highlevel-row.is-milestone .highlevel-bar-title { padding-top: 9px; }
+
+    .highlevel-today-line {
+      position: absolute;
+      z-index: 7;
+      top: var(--hl-header-height);
+      bottom: 0;
+      width: 3px;
+      background: #e11d48;
+      box-shadow: 0 0 0 2px #fff, 0 0 12px rgba(225, 29, 72, .35);
+      pointer-events: none;
+    }
+
+    .highlevel-today-line::before {
+      content: attr(data-label);
+      position: sticky;
+      top: var(--hl-header-height);
+      display: block;
+      width: max-content;
+      margin-left: -45px;
+      padding: 3px 8px;
+      border-radius: 0 0 7px 7px;
+      background: #e11d48;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .highlevel-empty {
+      padding: 32px;
+      color: #52617c;
+      text-align: center;
+      font-weight: 700;
     }
 
     .today-chip {
@@ -1252,9 +1447,7 @@
         padding-right: 15px;
       }
 
-      .highlevel-image-scroll {
-        padding: 8px;
-      }
+      .highlevel-chart { --hl-label-width: 210px; --hl-month-width: 74px; }
 
       .topbar {
         gap: 12px;
@@ -1844,19 +2037,17 @@
   <dialog id="highLevelDialog" class="highlevel-dialog" aria-labelledby="highLevelTitle" aria-describedby="highLevelDescription">
     <div class="highlevel-modal-header">
       <div>
-        <span class="highlevel-modal-eyebrow">Excel reference · Project overview</span>
+        <span class="highlevel-modal-eyebrow">Live project overview</span>
         <h2 id="highLevelTitle">High Level Project Timeline</h2>
-        <p id="highLevelDescription">ภาพรวมจากชีต High Level Project Timeline ในไฟล์แผนงาน</p>
+        <p id="highLevelDescription">สร้างจากข้อมูล Weekly Gantt และสูตรความคืบหน้าเดียวกับ Summary ทุกครั้งที่เปิด</p>
       </div>
       <button id="closeHighLevel" class="highlevel-close" type="button" aria-label="ปิดหน้าต่าง">×</button>
     </div>
     <div class="highlevel-modal-tools">
-      <span>ตัวเลขในภาพเป็นข้อมูลอ้างอิงจากไฟล์ Excel ไม่ใช่สถานะปัจจุบันของหน้า Progress</span>
-      <button id="toggleHighLevelZoom" class="highlevel-zoom" type="button" aria-pressed="false">ดูขนาดจริง 100%</button>
+      <div id="highLevelMetrics" class="highlevel-metrics" aria-live="polite"></div>
+      <button id="toggleHighLevelDetails" class="highlevel-detail-toggle" type="button" aria-pressed="true">ซ่อน Process</button>
     </div>
-    <div class="highlevel-image-scroll">
-      <img id="highLevelImage" class="highlevel-image" src="assets/high-level-project-timeline.png" width="1919" height="1079" loading="lazy" alt="High Level Project Timeline จาก Excel แสดงช่วงงานหลักรายเดือนตั้งแต่ Apr ถึง Sep พร้อมหมุดหมายหลัก 4 จุด">
-    </div>
+    <div id="highLevelChartScroll" class="highlevel-chart-scroll" aria-label="แผนงานภาพรวมรายเดือน"></div>
   </dialog>
 
   <script src="workplan_metrics.js"></script>
@@ -2387,6 +2578,124 @@
         const todayX = parseFloat(todayLine.style.getPropertyValue('--today-left'));
         const fixedLabel = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--label-width'));
         timelineScroll.scrollLeft = Math.max(0, todayX - (available + fixedLabel) / 2);
+      });
+    }
+
+    function highLevelMonthPosition(date, includeEnd = false) {
+      const monthIndex = months.findIndex(month => month.year === date.getFullYear() && month.month === date.getMonth());
+      if (monthIndex < 0) return date < chartStart ? 0 : 100;
+      const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+      const dayFraction = (date.getDate() - (includeEnd ? 0 : 1)) / daysInMonth;
+      return Math.max(0, Math.min(100, ((monthIndex + dayFraction) / months.length) * 100));
+    }
+
+    function highLevelActual(item, metrics, isStage) {
+      const row = isStage ? progressModel?.stages?.[String(item.id)] : progressModel?.tasks?.[String(item.id)];
+      return metrics?.byRow?.[row]
+        ? metrics.byRow[row].actual * 100
+        : (Number(item.percent_work_complete) || 0);
+    }
+
+    function renderHighLevelTimeline() {
+      const scroll = document.getElementById("highLevelChartScroll");
+      const metricBox = document.getElementById("highLevelMetrics");
+      if (!stages.length || !months.length) {
+        metricBox.textContent = "ยังไม่มีข้อมูลแผนงาน";
+        scroll.innerHTML = '<div class="highlevel-empty">ไม่มีข้อมูล Gantt สำหรับสร้างภาพรวม</div>';
+        return;
+      }
+
+      const current = toDate(dateInput.value);
+      const metrics = progressModel ? WorkplanMetrics.calculate(stages, progressModel, dateInput.value) : null;
+      const planned = metrics ? Math.floor(metrics.planned) : null;
+      const actual = metrics ? Math.floor(metrics.actual) : null;
+      const gap = metrics ? Math.max(0, planned - actual) : null;
+      const processes = stages.reduce((sum, stage) => sum + (stage.tasks || []).filter(task => Number(task.level) === 2).length, 0);
+      metricBox.innerHTML = `
+        <span class="highlevel-metric">Baseline Planned <strong>${planned === null ? '–' : `${planned}%`}</strong></span>
+        <span class="highlevel-metric">Actual <strong>${actual === null ? '–' : `${actual}%`}</strong></span>
+        <span class="highlevel-metric ${gap > 0 ? 'is-late' : ''}">${gap > 0 ? 'Behind Plan' : 'On Plan'} <strong>${gap === null ? '–' : `${gap}%`}</strong></span>
+        <span class="highlevel-metric">${stages.length} Milestones · ${processes} Processes · ${escapeHTML(formatter.format(current))}</span>
+      `;
+
+      const chart = document.createElement("div");
+      chart.className = "highlevel-chart";
+      chart.style.setProperty("--hl-months", months.length);
+      const header = document.createElement("div");
+      header.className = "highlevel-months";
+      header.innerHTML = '<div class="highlevel-months-label">Milestone / Process</div>';
+      const monthGrid = document.createElement("div");
+      monthGrid.className = "highlevel-month-grid";
+      months.forEach(month => {
+        const cell = document.createElement("div");
+        cell.className = "highlevel-month";
+        cell.textContent = month.label;
+        monthGrid.appendChild(cell);
+      });
+      header.appendChild(monthGrid);
+      chart.appendChild(header);
+
+      const showProcesses = document.getElementById("toggleHighLevelDetails").getAttribute("aria-pressed") === "true";
+      const addRow = (item, isStage) => {
+        const row = document.createElement("div");
+        row.className = `highlevel-row ${isStage ? 'is-milestone' : 'is-process'}`;
+        const label = document.createElement("div");
+        label.className = "highlevel-row-label";
+        const labelText = document.createElement("span");
+        labelText.className = "highlevel-row-label-text";
+        labelText.title = `${item.title} · ${formatRange(item)}`;
+        const code = document.createElement("span");
+        code.className = "highlevel-row-code";
+        code.textContent = item.wbs || '';
+        labelText.append(code, document.createTextNode(item.title));
+        label.appendChild(labelText);
+        const track = document.createElement("div");
+        track.className = "highlevel-row-track";
+        const bar = document.createElement("div");
+        bar.className = "highlevel-bar";
+        const left = highLevelMonthPosition(toDate(item.start));
+        const right = highLevelMonthPosition(toDate(item.end), true);
+        const progress = highLevelActual(item, metrics, isStage);
+        bar.style.left = `${left}%`;
+        bar.style.width = `${Math.max(.35, right - left)}%`;
+        const barColor = item.color || (isStage ? '#4b64b8' : '#70a9c8');
+        bar.style.setProperty("--hl-color", barColor);
+        bar.style.setProperty("--hl-ink", getContrastColor(barColor));
+        bar.style.setProperty("--hl-progress", `${Math.max(0, Math.min(100, progress))}%`);
+        const progressLabel = current < toDate(item.start) && progress === 0 ? 'ยังไม่เริ่ม' : `Actual ${Math.floor(progress)}%`;
+        bar.title = `${item.wbs || ''} ${item.title} · ${formatRange(item)} · ${progressLabel} · ${getStateLabel(getState(item, current))}`;
+        bar.setAttribute("aria-label", bar.title);
+        const fill = document.createElement("span");
+        fill.className = "highlevel-bar-progress";
+        const title = document.createElement("span");
+        title.className = "highlevel-bar-title";
+        title.textContent = isStage ? `${item.title} · ${progressLabel}` : item.title;
+        bar.append(fill, title);
+        track.appendChild(bar);
+        row.append(label, track);
+        chart.appendChild(row);
+      };
+
+      stages.forEach(stage => {
+        addRow(stage, true);
+        if (showProcesses) (stage.tasks || [])
+          .filter(task => Number(task.level) === 2)
+          .sort((a, b) => toDate(a.start) - toDate(b.start) || String(a.wbs || '').localeCompare(String(b.wbs || '')))
+          .forEach(task => addRow(task, false));
+      });
+
+      const today = document.createElement("div");
+      today.className = "highlevel-today-line";
+      today.dataset.label = `${dateInput.value === dateValue(new Date()) ? 'Today' : 'วันที่เลือก'} · ${shortFormatter.format(current)}`;
+      chart.appendChild(today);
+      scroll.replaceChildren(chart);
+      requestAnimationFrame(() => {
+        const labelWidth = parseFloat(getComputedStyle(chart).getPropertyValue('--hl-label-width'));
+        const monthWidth = parseFloat(getComputedStyle(chart).getPropertyValue('--hl-month-width'));
+        const todayX = labelWidth + months.length * monthWidth * highLevelMonthPosition(current) / 100;
+        today.style.left = `${todayX}px`;
+        scroll.scrollLeft = Math.max(0, todayX - (scroll.clientWidth + labelWidth) / 2);
+        scroll.scrollTop = 0;
       });
     }
 
@@ -3064,18 +3373,43 @@
 
       const highLevelTrigger = document.getElementById("openHighLevel");
       const highLevelDialog = document.getElementById("highLevelDialog");
-      const highLevelImage = document.getElementById("highLevelImage");
-      const highLevelZoom = document.getElementById("toggleHighLevelZoom");
-      highLevelTrigger.addEventListener("click", () => highLevelDialog.showModal());
+      const highLevelDetails = document.getElementById("toggleHighLevelDetails");
+      highLevelTrigger.addEventListener("click", async () => {
+        highLevelDialog.showModal();
+        highLevelTrigger.disabled = true;
+        document.getElementById("highLevelMetrics").textContent = "กำลังอัปเดตข้อมูลแผนงาน…";
+        document.getElementById("highLevelChartScroll").innerHTML = '<div class="highlevel-empty">กำลังสร้าง High Level Timeline จาก Gantt ล่าสุด…</div>';
+        try {
+          const response = await fetch(`api.php?action=get_timeline&project_id=${projectId}`, { cache: "no-store" });
+          if (!response.ok) throw new Error(`โหลดข้อมูลไม่สำเร็จ (${response.status})`);
+          const fresh = await response.json();
+          project = fresh.project || {};
+          stages = fresh.stages || [];
+          progressModel = fresh.progress_model || null;
+          document.getElementById("projectTitle").textContent = project.name || "Project Timeline";
+          document.getElementById("projectSubtitle").textContent = project.description || "Dynamic Project Timeline Dashboard";
+          document.getElementById("footerText").textContent = `RM-Retail POS Project (JIFFY POS): ${project.name || ''}`;
+          initChartDates();
+          renderHeader();
+          renderStatus();
+          renderHighLevelTimeline();
+        } catch (error) {
+          document.getElementById("highLevelMetrics").textContent = "ไม่สามารถอัปเดตข้อมูลได้";
+          document.getElementById("highLevelChartScroll").innerHTML = `<div class="highlevel-empty">${escapeHTML(error.message)}</div>`;
+        } finally {
+          highLevelTrigger.disabled = false;
+        }
+      });
       document.getElementById("closeHighLevel").addEventListener("click", () => highLevelDialog.close());
       highLevelDialog.addEventListener("click", event => {
         if (event.target === highLevelDialog) highLevelDialog.close();
       });
       highLevelDialog.addEventListener("close", () => highLevelTrigger.focus());
-      highLevelZoom.addEventListener("click", () => {
-        const zoomed = highLevelImage.classList.toggle("is-zoomed");
-        highLevelZoom.setAttribute("aria-pressed", String(zoomed));
-        highLevelZoom.textContent = zoomed ? "พอดีหน้าต่าง" : "ดูขนาดจริง 100%";
+      highLevelDetails.addEventListener("click", () => {
+        const show = highLevelDetails.getAttribute("aria-pressed") !== "true";
+        highLevelDetails.setAttribute("aria-pressed", String(show));
+        highLevelDetails.textContent = show ? "ซ่อน Process" : "แสดง Process";
+        renderHighLevelTimeline();
       });
     });
   </script>

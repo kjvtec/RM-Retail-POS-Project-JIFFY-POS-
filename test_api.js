@@ -102,10 +102,10 @@ async function runTests() {
 
     assert.match(resTimeline.body, /id="openHighLevel"[^>]*aria-controls="highLevelDialog"/);
     assert.match(resTimeline.body, /<dialog id="highLevelDialog"/);
-    const resHighLevelImage = await request('/assets/high-level-project-timeline.png');
-    assert.equal(resHighLevelImage.status, 200);
-    assert.match(resHighLevelImage.headers['content-type'], /image\/png/);
-    console.log('✅ High Level Project Timeline dialog and Excel reference image are available.');
+    assert.match(resTimeline.body, /function renderHighLevelTimeline\(\)/);
+    assert.match(resTimeline.body, /cache: "no-store"/);
+    assert.doesNotMatch(resTimeline.body, /high-level-project-timeline\.png/);
+    console.log('✅ High Level Project Timeline rebuilds from fresh Gantt data.');
 
     // Test 2.3: Check admin login page
     const resLogin = await request('/admin/login');
